@@ -63,7 +63,7 @@ class MailManagerTest {
     @Test
     void readEmails() {
         int unexpected = -1;
-        int actual = 0;
+        int actual;
 
         Mail_manager manager = new Mail_manager();
         try {
