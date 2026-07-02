@@ -83,7 +83,7 @@ class MailManagerTest {
             }
 
 
-        } catch (MessagingException | IOException e) {
+        } catch (MessagingException e) {
             throw new RuntimeException(e);
         }
     }
@@ -105,7 +105,7 @@ class MailManagerTest {
             }
 
 
-        }catch (MessagingException | IOException e){
+        }catch (MessagingException e){
             throw new RuntimeException(e);
         }
     }

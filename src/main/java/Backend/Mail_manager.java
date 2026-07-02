@@ -28,100 +28,120 @@ public class Mail_manager {
 
     //Count number of emails unread and total
 
-    public int emailCount() throws MessagingException{
-        Folder inbox = this.store.getFolder("inbox"); //Get a count of all the emails and unread emails
+    public int emailCount(){
+        try {
+            Folder inbox = this.store.getFolder("inbox"); //Get a count of all the emails and unread emails
 
-        inbox.open(Folder.READ_ONLY);
+            inbox.open(Folder.READ_ONLY);
 
-        int num_messages = inbox.getUnreadMessageCount();
-        inbox.close(true);
-        return num_messages;
+            int num_messages = inbox.getUnreadMessageCount();
+            inbox.close(true);
+            return num_messages;
+        }
+        catch (MessagingException e){
+            throw new RuntimeException(e);
+        }
     }
 
     //Read an email
     //info stored in an array
 
-    private String getTextFromMessage(MimeMultipart multipart)throws MessagingException, IOException{
-        StringBuilder result = new StringBuilder();
+    private String getTextFromMessage(MimeMultipart multipart){
+        try {
 
-        for (int i=0; i < multipart.getCount();i++){
+            StringBuilder result = new StringBuilder();
 
-            BodyPart part = multipart.getBodyPart(i);
+            for (int i = 0; i < multipart.getCount(); i++) {
 
-            //ignore the attachments and skip to the next part
-            if(Part.ATTACHMENT.equalsIgnoreCase(part.getDisposition())){
-                continue;
+                BodyPart part = multipart.getBodyPart(i);
+
+                //ignore the attachments and skip to the next part
+                if (Part.ATTACHMENT.equalsIgnoreCase(part.getDisposition())) {
+                    continue;
+                }
+
+                Object content = part.getContent();
+                if (content instanceof String) {
+                    result.append(content);
+                } else if (content instanceof MimeMultipart nested) {
+                    result.append(getTextFromMessage(nested));
+                }
             }
 
-            Object content = part.getContent();
-            if(content instanceof String){
-                result.append(content);
-            }
-            else if(content instanceof MimeMultipart nested){
-                result.append(getTextFromMessage(nested));
-            }
+            return result.toString();
         }
-
-        return result.toString();
-
+        catch (MessagingException| IOException e){
+            throw new RuntimeException(e);
+        }
     }
 
     //[messages ID][dest,subject,content]
     //the order is reversed the latest email will be the last in the list
-    public String[][] readEmails() throws MessagingException, IOException {
-        Folder inbox =this.store.getFolder("inbox");
-        //array of unread emails size = number of unread emails
-        String[][] emails = new String[emailCount()][3];
-        //no emails to read
-        if (emails[0].length == 0){
+    public String[][] readEmails() {
+        try {
+
+            Folder inbox = this.store.getFolder("inbox");
+            //array of unread emails size = number of unread emails
+            String[][] emails = new String[emailCount()][3];
+            //no emails to read
+            if (emails[0].length == 0) {
+                return emails;
+            }
+
+
+            //Extract only the unread emails into a list
+            inbox.open(Folder.READ_ONLY);
+            Message[] messages = MailListGetter(inbox, false);
+
+            for (int i = 0; i < messages.length; i++) {
+                emails[i][0] = Arrays.toString(messages[i].getFrom());
+                emails[i][1] = messages[i].getSubject();
+
+                Object content = messages[i].getContent();
+                if (content instanceof String) {
+                    //System.out.println("Message: \n" + (String) content);
+                    emails[i][2] = (String) content;
+                }
+                if (content instanceof MimeMultipart multipart) {
+                    //System.out.println("Message: \n" + getTextFromMessage(multipart));
+                    emails[i][2] = getTextFromMessage(multipart);
+                }
+            }
+            inbox.close(true);
+
             return emails;
-        }
-
-
-        //Extract only the unread emails into a list
-        inbox.open(Folder.READ_ONLY);
-        Message[] messages = MailListGetter(inbox, false);
-
-        for (int i=0; i<messages.length; i++) {
-            emails[i][0]=Arrays.toString(messages[i].getFrom());
-            emails[i][1]=messages[i].getSubject();
-
-            Object content = messages[i].getContent();
-            if (content instanceof String) {
-                //System.out.println("Message: \n" + (String) content);
-                emails[i][2]=(String) content;
-            }
-            if (content instanceof MimeMultipart multipart) {
-                //System.out.println("Message: \n" + getTextFromMessage(multipart));
-                emails[i][2]=getTextFromMessage(multipart);
-            }
-        }
-        inbox.close(true);
-
-        return emails;
+        }catch (MessagingException | IOException e){
+        throw new RuntimeException(e);
     }
 
+}
+
     //Mark an unread email as read based on array position
-    public boolean markMailAsRead(int mail_ID) throws MessagingException{
-        Folder inbox = this.store.getFolder("inbox");
-        inbox.open(Folder.READ_WRITE);
+    public boolean markMailAsRead(int mail_ID){
+        try {
 
-        //find unseen messages
-        Message[] messages = MailListGetter(inbox, true);
-        if (messages.length>= mail_ID-1){
-            try {
-                Message targetMessage = messages[mail_ID];
-                targetMessage.setFlag(Flags.Flag.SEEN, true);
-                return true; //return true if the change was successful
+            Folder inbox = this.store.getFolder("inbox");
+            inbox.open(Folder.READ_WRITE);
 
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+            //find unseen messages
+            Message[] messages = MailListGetter(inbox, true);
+            if (messages.length >= mail_ID - 1) {
+                try {
+                    Message targetMessage = messages[mail_ID];
+                    targetMessage.setFlag(Flags.Flag.SEEN, true);
+                    return true; //return true if the change was successful
+
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
             }
 
+            inbox.close(true);
+            return false;
+        }catch (MessagingException e){
+            throw new RuntimeException(e);
         }
-
-        inbox.close(true);
-        return false;
     }
 
 

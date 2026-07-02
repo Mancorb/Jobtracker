@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
+import java.util.Dictionary;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -14,50 +15,33 @@ class DataBase_connectionTest {
 
     @BeforeEach
     void setUp() {
-        try {
-            this.db = new DataBase_connection();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        this.db = new DataBase_connection();
     }
 
     @AfterEach
     void cleanup(){
-        try {
-            this.db.CloseConnection();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        this.db.CloseConnection();
     }
 
 
     @Test
     void querySQL_SimpleTest() {
         String query = "SELECT * FROM Companies";
-        try {
 
-            assertNotNull(this.db.QuerySQL(query));
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        assertNotNull(this.db.QuerySQL(query));
     }
 
     @Test
     void insertSQL() {
-        String Table = "Locations";
-        String Values = "9999,\"Terra\",\"Golden Throne\"";
+        //delete the line just in case
+        db.InsertSQL("DELETE FROM Locations WHERE ID=9999");
 
-        String query = "INSERT INTO "+Table+" VALUES("+Values+"));";
-        try {
-            assertTrue(this.db.InsertSQL(query));
+        String query = "INSERT INTO Locations VALUES(9999,'Terra','Golden Throne');";
 
-            query = "DELETE FROM Locations WHERE ID=9999";
+        assertTrue(this.db.InsertSQL(query));
+        query = "DELETE FROM Locations WHERE ID=9999";
+        assertTrue(db.InsertSQL(query));
 
-            assertTrue(db.InsertSQL(query));
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @Test
@@ -68,26 +52,23 @@ class DataBase_connectionTest {
 
         String[] customQuery = {"INSERT INTO ",Table," Values (",Values,");"};
 
-        String ID = "ID";
-        String SelectQuery = String.format("SELECT COUNT(%s) FROM %s",ID,Table);
+        String SelectQuery = String.format("SELECT * FROM %s",Table);
 
-        try {
-            String prevVal = this.db.QuerySQL(SelectQuery);
+        Dictionary<String,String[]> prevVal, newVal;
 
-            assertTrue(this.db.InsertSQL(String.join("",customQuery)));
+        prevVal = this.db.QuerySQL(SelectQuery);
 
-            String newVal = this.db.QuerySQL(SelectQuery);
+        assertTrue(this.db.InsertSQL(String.join("",customQuery)));
 
-            assertNotEquals(prevVal,newVal);
+        newVal = this.db.QuerySQL(SelectQuery);
+
+        assertNotEquals(prevVal,newVal);
 
 
-            String query = "DELETE FROM Locations WHERE ID=9999";
+        String query = "DELETE FROM Locations WHERE ID=9999";
 
-            assertTrue(db.InsertSQL(query));
+        assertTrue(db.InsertSQL(query));
 
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
     }
 
 }
