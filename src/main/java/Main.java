@@ -1,9 +1,12 @@
 import Backend.DataBase_connection;
 import Backend.Mail_manager;
 
-import java.sql.SQLException;
-import java.util.Arrays;
+
 import java.util.Dictionary;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
 
 public class Main {
 
@@ -11,9 +14,13 @@ public class Main {
     public static Mail_manager mail = new Mail_manager();
 
     public static void main(String[] args){
-        checkNewUser();
+        String appPswd = checkNewUser();
+
+        Notification("Recognized data:"+appPswd);
 
         connection.CloseConnection();
+
+
 
 
 
@@ -27,10 +34,27 @@ public class Main {
     }
 
     //check if the user has registered an email address into the database.
-    private static void checkNewUser(){
+    private static String checkNewUser(){
         Dictionary<String,String[]> dicResult = connection.QuerySQL("Auth","SELECT * FROM Auth;");
-        System.out.println(Arrays.toString(dicResult.get("code")));
 
+        if (dicResult.isEmpty()){
+            Notification("New User detected, please insert credentials:");
+            String address = UserInput();
+            Notification("Insert App password to access email:");
+            String pswd  = UserInput();
+
+            connection.SQLCommand(String.format("INSERT INTO Auth VALUES(\"%s\",\"%s\")",address, pswd));
+            return pswd;
+        }
+        return dicResult.get("code")[0];
+    }
+
+    private static void Notification (String content){
+        System.out.print("[+]"+content);
+    }
+
+    private static String UserInput (){
+        return System.console().readLine();
     }
 
     private void unreadMailCheck(){

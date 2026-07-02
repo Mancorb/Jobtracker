@@ -4,7 +4,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.sql.SQLException;
 import java.util.Dictionary;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,19 +27,19 @@ class DataBase_connectionTest {
     void querySQL_SimpleTest() {
         String query = "SELECT * FROM Companies";
 
-        assertNotNull(this.db.QuerySQL(query));
+        assertNotNull(this.db.QuerySQL("companies",query));
     }
 
     @Test
-    void insertSQL() {
+    void SQLCommand() {
         //delete the line just in case
-        db.InsertSQL("DELETE FROM Locations WHERE ID=9999");
+        db.SQLCommand("DELETE FROM Locations WHERE ID=9999");
 
         String query = "INSERT INTO Locations VALUES(9999,'Terra','Golden Throne');";
 
-        assertTrue(this.db.InsertSQL(query));
+        assertTrue(this.db.SQLCommand(query));
         query = "DELETE FROM Locations WHERE ID=9999";
-        assertTrue(db.InsertSQL(query));
+        assertTrue(db.SQLCommand(query));
 
     }
 
@@ -56,18 +55,18 @@ class DataBase_connectionTest {
 
         Dictionary<String,String[]> prevVal, newVal;
 
-        prevVal = this.db.QuerySQL(SelectQuery);
+        prevVal = this.db.QuerySQL(Table,SelectQuery);
 
-        assertTrue(this.db.InsertSQL(String.join("",customQuery)));
+        assertTrue(this.db.SQLCommand(String.join("",customQuery)));
 
-        newVal = this.db.QuerySQL(SelectQuery);
+        newVal = this.db.QuerySQL(Table, SelectQuery);
 
         assertNotEquals(prevVal,newVal);
 
 
         String query = "DELETE FROM Locations WHERE ID=9999";
 
-        assertTrue(db.InsertSQL(query));
+        assertTrue(db.SQLCommand(query));
 
     }
 

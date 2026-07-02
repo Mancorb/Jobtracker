@@ -1,5 +1,4 @@
 package Backend;
-import javax.lang.model.type.NullType;
 import java.sql.*;
 import java.util.*;
 
@@ -91,7 +90,7 @@ public class DataBase_connection {
                 rows[i][j] = result.getString(keys.nextElement());
             }
         }
-        //TODO Test this feature
+
         //Store the all the rows corresponding to this column in  a list
         Enumeration<String> keys = dataDic.keys();
         for(int i=0;i<colCount;i++){
@@ -107,7 +106,7 @@ public class DataBase_connection {
     }
 
     //Insert data
-    public boolean InsertSQL(String sql) {
+    public boolean SQLCommand(String sql) {
         try{
             Statement statement = this.connection.createStatement();
             statement.executeUpdate(sql);
@@ -119,5 +118,6 @@ public class DataBase_connection {
             return false;
         }
     }
+
 
 }
