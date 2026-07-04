@@ -47,7 +47,7 @@ public class DataBase_connection {
             if(result.next()) {
                 rowCounter = result.getInt(1);
                 //if there are no results just return an empty dictionary
-                if (rowCounter < 1) {
+                if (rowCounter ==0) {
                     return dataDic;
                 }
             }

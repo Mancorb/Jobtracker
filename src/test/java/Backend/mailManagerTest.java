@@ -13,14 +13,12 @@ class MailManagerTest {
 
     private String address;
     private String password;
-    private String provider;
 
 
     @BeforeEach
     void setup() {
         this.address = System.getenv("GMAIL_USER");
         this.password = System.getenv("GMAIL_APP_PASS");
-        this.provider = "imap.gmail.com";
     }
 
     @Test
@@ -28,7 +26,7 @@ class MailManagerTest {
         Mail_manager manager = new Mail_manager();
 
         try {
-            manager.establishConnection(this.address, this.provider, this.password);
+            manager.establishConnection(this.address, this.password);
         } catch (MessagingException e) {
             throw new RuntimeException(e);
         }
@@ -38,7 +36,7 @@ class MailManagerTest {
     void sendTestEmail(){
         Mail_manager manager = new Mail_manager();
         try{
-            manager.establishConnection(this.address,this.provider,this.password);
+            manager.establishConnection(this.address,this.password);
             assertTrue(manager.sendTestEmail(this.address,this.password));
 
         }catch (MessagingException e){
@@ -51,7 +49,7 @@ class MailManagerTest {
         Mail_manager manager = new Mail_manager();
         int result =-1;
         try {
-            manager.establishConnection(this.address,this.provider, this.password);
+            manager.establishConnection(this.address, this.password);
             result = manager.emailCount();
         }
         catch (MessagingException e){
@@ -67,7 +65,7 @@ class MailManagerTest {
 
         Mail_manager manager = new Mail_manager();
         try {
-            manager.establishConnection(this.address,this.provider,this.password);
+            manager.establishConnection(this.address,this.password);
             String [][] emails = manager.readEmails();
 
             actual = emails[0].length;
@@ -93,7 +91,7 @@ class MailManagerTest {
         Mail_manager manager = new Mail_manager();
 
         try{
-            manager.establishConnection(this.address,this.provider,this.password);
+            manager.establishConnection(this.address,this.password);
             String[][]messages = manager.readEmails();
 
             assertNotNull(messages[0][0]);
@@ -115,7 +113,7 @@ class MailManagerTest {
         Mail_manager manager = new Mail_manager();
 
         try {
-            manager.establishConnection(this.address, this.provider, this.password);
+            manager.establishConnection(this.address, this.password);
             int id = manager.emailCount()-1;
             boolean response = manager.markMailAsRead(id);
             assertTrue(response);
@@ -130,7 +128,7 @@ class MailManagerTest {
         Mail_manager manager = new Mail_manager();
 
         try{
-            manager.establishConnection(this.address,this.provider,this.password);
+            manager.establishConnection(this.address,this.password);
 
             //send test email to delete only if one has not been sent before
             manager.sendTestEmail(this.address, this.password);

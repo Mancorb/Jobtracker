@@ -15,7 +15,7 @@ public class Mail_manager {
     private Store store;
 
 
-    public void establishConnection(String mail_address, String provider, String password) throws MessagingException {
+    public void establishConnection(String mail_address, String password) throws MessagingException {
 
         Properties props = System.getProperties();
         props.setProperty("mail.store.protocol", "imaps");
@@ -23,7 +23,7 @@ public class Mail_manager {
         Session session = Session.getDefaultInstance(props,null);
 
         this.store = session.getStore("imaps");
-        store.connect(provider,mail_address, password);
+        store.connect("imap.gmail.com",mail_address, password);
     }
 
     //Count number of emails unread and total
@@ -75,7 +75,7 @@ public class Mail_manager {
         }
     }
 
-    //[messages ID][dest,subject,content]
+    //[messages ID][sender,subject,content]
     //the order is reversed the latest email will be the last in the list
     public String[][] readEmails() {
         try {
@@ -145,7 +145,7 @@ public class Mail_manager {
     }
 
 
-    public Message[] MailListGetter(Folder inbox, boolean unread) throws MessagingException{
+    private Message[] MailListGetter(Folder inbox, boolean unread) throws MessagingException{
         return inbox.search(new FlagTerm(
                 new Flags(Flags.Flag.SEEN),unread));
     }
