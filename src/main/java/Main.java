@@ -2,7 +2,6 @@ import Backend.DataBase_connection;
 import Backend.Mail_manager;
 import jakarta.mail.MessagingException;
 
-import java.util.Arrays;
 import java.util.Scanner;
 
 
