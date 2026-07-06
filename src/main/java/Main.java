@@ -13,21 +13,13 @@ public class Main {
     public static DataBase_connection DB = new DataBase_connection();
     public static Mail_manager mail = new Mail_manager();
 
-    public static void main(String[] args){
+    public static void main(String[] args) throws MessagingException {
         String[] credentials = checkNewUser();
 
-        if (credentials.length==0 || credentials[0]==null){
-            System.out.println("[!] ERROR no user credentials found!!!\nSHUTTING DOWN...");
-            System.exit(0);
-        }
-        Notification("Recognized data:" + credentials[0]);
+        Notification("[+] Recognized data:" + credentials[0]);
         //Connect with user's email service provider
-        try {
-            mail.establishConnection(credentials[0],credentials[1]);
-            unreadMailCheck();
-        } catch (MessagingException e) {
-            throw new RuntimeException(e);
-        }
+
+        unreadMailCheck();
 
         DB.CloseConnection();
 
@@ -39,7 +31,10 @@ public class Main {
         //DONE 1.- ask the user for access credentials email can be stored in the DB
         //DONE 2.- ask the user for app password credentials
         //DONE 3.- check for unread emails
+        //extract only unread emails if they contain specific words from the wordlist
         //4.- filter company names and add them to the DB
+        //sometimes the email will come from a hiring site instead of the actual company site
+
 
 
 
@@ -48,20 +43,43 @@ public class Main {
     //check if the user has registered an email address into the database.
     private static String[] checkNewUser(){
         Dictionary<String,String[]> dicResult = DB.QuerySQL("Auth","SELECT * FROM Auth;");
-        String[] DB_result = new String[2];
 
         //no user found in DB register a new one
-        if (dicResult.isEmpty()){
-            Notification("New User detected, please insert email address:");
-            DB_result[0] = UserInput();
-            Notification("Insert App password to access email:");
-            DB_result[1]  = UserInput();
+        String username,password;
 
-            DB.SQLCommand(String.format("INSERT INTO Auth VALUES(\"%s\",\"%s\")",
-                    DB_result[0], DB_result[1]));
-            return DB_result;
+        if (dicResult.isEmpty()) {//avoid user miss input
+            while(true) {//ask for login until login successfull.
+                try {
+                    Notification("[+] New User detected, please insert email address:");
+                    username = UserInput();
+                    Notification("[+] Insert App password to access email:");
+                    password = UserInput();
 
+                    mail.establishConnection(username,password);
+                    break;
+
+                } catch (Exception e) {
+                    Notification("[!] ERROR Something failed:\n" + e + "\n[+]Please try again...\n");
+                }
+            }
+            //Save data only if login was successfull
+            DB.SQLCommand(String.format("INSERT INTO Auth VALUES(\"%s\",\"%s\")",username, password));
+            return new String[]{username, password};
         }
+        else{
+            try{//checked saved data if it fails delete saved credentials and ask for new ones to register
+                Dictionary<String, String[]> rawOutput = DB.QuerySQL("Auth","SELECT * FROM Auth;");
+                username = rawOutput.get("address")[0];
+                password = rawOutput.get("code")[0];
+                mail.establishConnection(username,password);
+            } catch (Exception e) {
+                Notification("[!] Warning saved credentials in Database are no longer valid please reinsert credentials.");
+                DB.SQLCommand("DELETE FROM auth;");
+                checkNewUser();
+            }
+        }
+
+
         return new String[] {
                 dicResult.get("address")[0],
                 dicResult.get("code")[0]
@@ -69,12 +87,23 @@ public class Main {
     }
 
     private static void Notification (String content){
-        System.out.println("[+]"+content);
+        System.out.println(content);
     }
 
     private static String UserInput (){
-        Scanner s = new Scanner(System.in);
-        return s.nextLine();
+        String result;
+        while (true){
+            Scanner s = new Scanner(System.in);
+            result = s.nextLine();
+            if (!result.isEmpty()){
+                return result;
+            }
+            else {
+                Notification("[!] WARNING Invalid input please try again.");
+            }
+        }
+
+
     }
 
     private static void unreadMailCheck(){
@@ -84,16 +113,25 @@ public class Main {
         }
         //extract content of the emails that are unread
         String [][] inbox = mail.readEmails();
-        System.out.println("[+]Senders:");
+        //Filter out other emails
 
+        System.out.println("[+]Senders:");
         for (int i=0; i< inbox.length;i++){
             System.out.println(
                     String.format("[%d] %s\n%s\n-----------------",
-                            i,inbox[i][0],inbox[i][1])
+                            i+1,
+                            inbox[i][0],
+                            inbox[i][1])
             );
         }
     }
 
+    //NLP processing if it gets too big make it into a separate class
+
+    private static String[][]workWordfilter(String[][] inbox){
 
 
+
+        return inbox;
+    }
 }
