@@ -1,5 +1,6 @@
 import Backend.DataBase_connection;
 import Backend.Mail_manager;
+import Backend.NER;
 import jakarta.mail.MessagingException;
 
 import java.util.Scanner;
@@ -86,6 +87,29 @@ public class Main {
         };
     }
 
+    private static void unreadMailCheck(){
+        Notification("[+] Checking for unread emails");
+        int num_mails = mail.emailCount();
+        if (num_mails<0){
+            return;
+        }
+        //extract content of the emails that are unread
+        String [][] inbox = mail.readEmails();
+        //Filter out other emails
+        System.out.println("pass");
+    }
+
+    //NLP processing if it gets too big make it into a separate class
+
+    private static String[][]workWordfilter(String[][] inbox){
+
+
+
+        return inbox;
+    }
+
+    //Handle UI
+    //----------------------------------
     private static void Notification (String content){
         System.out.println(content);
     }
@@ -105,33 +129,6 @@ public class Main {
 
 
     }
+    //----------------------------------
 
-    private static void unreadMailCheck(){
-        int num_mails = mail.emailCount();
-        if (num_mails<0){
-            return;
-        }
-        //extract content of the emails that are unread
-        String [][] inbox = mail.readEmails();
-        //Filter out other emails
-
-        System.out.println("[+]Senders:");
-        for (int i=0; i< inbox.length;i++){
-            System.out.println(
-                    String.format("[%d] %s\n%s\n-----------------",
-                            i+1,
-                            inbox[i][0],
-                            inbox[i][1])
-            );
-        }
-    }
-
-    //NLP processing if it gets too big make it into a separate class
-
-    private static String[][]workWordfilter(String[][] inbox){
-
-
-
-        return inbox;
-    }
 }
