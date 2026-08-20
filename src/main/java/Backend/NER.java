@@ -1,5 +1,8 @@
 package Backend;
 import opennlp.tools.lemmatizer.DictionaryLemmatizer;
+import opennlp.tools.lemmatizer.Lemmatizer;
+import opennlp.tools.lemmatizer.LemmatizerME;
+import opennlp.tools.lemmatizer.LemmatizerModel;
 import opennlp.tools.namefind.NameFinderME;
 import opennlp.tools.namefind.TokenNameFinderModel;
 import opennlp.tools.postag.POSModel;
@@ -19,7 +22,6 @@ import java.util.List;
 import java.util.Locale;
 import org.json.JSONObject;
 
-//TODO: test the scoring methods in the main class.
 public class NER {
 
     private JSONObject data;
@@ -104,7 +106,7 @@ public class NER {
         }
         return score;
     }
-    
+
     //note that the emails can have a sender of the service like linkedin and the company name may be in the email it self
 
     private int wordScore(String[] lemTokens, String cls) throws IOException {
@@ -166,7 +168,7 @@ public class NER {
 
         try {
 
-            InputStream inputStreamPOSTagger = getClass().getResourceAsStream("src/main/resources/Models/en-pos-maxent.bin");
+            InputStream inputStreamPOSTagger = getClass().getResourceAsStream("/Models/en-pos-maxent.bin");
             assert inputStreamPOSTagger != null;
 
             POSModel posModel = new POSModel(inputStreamPOSTagger);
@@ -182,9 +184,14 @@ public class NER {
 
     private String[] lemmatizer(String[] tokens, String[] tags) {
         try {
-            InputStream dictLemmatizer = getClass().getResourceAsStream("src/main/resources/Models/opennlp-en-ud-ewt-lemmas-1.3-2.5.4.bin");
-            assert dictLemmatizer != null;
-            DictionaryLemmatizer lemmatizer = new DictionaryLemmatizer(dictLemmatizer);
+            InputStream modelInput = getClass().getResourceAsStream("/Models/opennlp-en-ud-ewt-lemmas-1.3-2.5.4.bin");
+            if (modelInput == null) {
+                throw new RuntimeException(
+                        "Could not find lemmatizer model"
+                );
+            }
+            LemmatizerModel model = new LemmatizerModel(modelInput);
+            LemmatizerME lemmatizer = new LemmatizerME(model);
 
             return lemmatizer.lemmatize(tokens, tags);
 

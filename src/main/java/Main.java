@@ -32,6 +32,9 @@ public class Main {
         //DONE 1.- ask the user for access credentials email can be stored in the DB
         //DONE 2.- ask the user for app password credentials
         //DONE 3.- check for unread emails
+
+        //unread emails to analyze, can be filtered out by looking for specific words in the sender and in the subject section
+
         //extract only unread emails if they contain specific words from the wordlist
         //4.- filter company names and add them to the DB
         //sometimes the email will come from a hiring site instead of the actual company site
@@ -88,6 +91,7 @@ public class Main {
     }
 
     private static void unreadMailCheck(){
+        ///Gets number of unread emails, extract text data
         Notification("[+] Checking for unread emails");
         int num_mails = mail.emailCount();
         if (num_mails<0){
@@ -95,18 +99,42 @@ public class Main {
         }
         //extract content of the emails that are unread
         String [][] inbox = mail.readEmails();
+        //TODO apply filters to look for corresponding job application emails
         //Filter out other emails
+
+        //extract sender
+
+
         System.out.println("pass");
     }
 
-    //NLP processing if it gets too big make it into a separate class
+    private String[][] senderFilter (String[][] emails){
 
-    private static String[][]workWordfilter(String[][] inbox){
+        String[] senders =new String[emails.length];
+
+        for (int i=0; i<emails.length;i++){//go through all emails
+            //remove all special characters from the extracted text except '@'
+            senders[i]= emails[i][0].replaceAll("[^\\p{L}\\p{N} @]","");
+            emails[i][0] = senders[i];
+        }
+        //Check if the senders are part of the DB of recruiter companies
+        //individual queries must be made in since the number of saved entries will end up bigger than the number or unread emails in the user's inbox
 
 
+        //is it alredy registered?
+        for (int i =0; i< senders.length;i++){
+            //note that company names cannot be identified easily with an NER but the company name is usually the same as the sender and found after the @
+            String query = String.format("SELECT 'Name' FROM Companies WHERE 'NAME'= %s",senders[i]);
+            if (!DB.QuerySQL("Companies",query).isEmpty()){
+                //check the type of email it is
+            }
+        }
 
-        return inbox;
+        return emails;
     }
+
+
+
 
     //Handle UI
     //----------------------------------

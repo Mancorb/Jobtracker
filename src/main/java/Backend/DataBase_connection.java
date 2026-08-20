@@ -28,10 +28,12 @@ public class DataBase_connection {
     //Reading and writing info into the DB
 
     public Dictionary<String,String[]> QuerySQL (String table,String sql){
-
+        ///Table will tell the method to check if it contains rows or if it exists without consuming too many resources or causing an error.
+        ///SQL is the actual query done if there are rows to retrieve from
         try {
 
             //Get a connection and prepare the query in the appropriate format
+            // This seccion checks if there are any rows to retrieve from the selected table
             Statement sqlQuery = this.connection.createStatement();
 
             String countSQL = String.format("SELECT COUNT(*) FROM %s;",table);
