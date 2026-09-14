@@ -6,18 +6,15 @@ import org.junit.jupiter.api.Test;
 
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
 import java.util.List;
 
-class NER_Test {
+class NamedEntityRecognition_Test {
 
 
     @Test
     //average time for processing a 2000 line csv 25 min
     void scoring_general (){
-        NER ner = new NER();
+        NamedEntityRecognition namedEntityRecognition = new NamedEntityRecognition();
 
         //read general_email.csv
         int [][] totalScores = new int[2000][];
@@ -34,8 +31,8 @@ class NER_Test {
             int counter = 0;
 
             for (String[] row: allData){
-                int[] tempScores_subject = ner.phraseMatching(row[4]);
-                int[] tempScores_content = ner.phraseMatching(row[5]);
+                int[] tempScores_subject = namedEntityRecognition.phraseMatching(row[4]);
+                int[] tempScores_content = namedEntityRecognition.phraseMatching(row[5]);
                 int [] tempScoreLst = new int[4];
 
                 if ((counter)%100 == 0){

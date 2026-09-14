@@ -1,26 +1,27 @@
 import Backend.DataBase_connection;
 import Backend.Mail_manager;
-import Backend.NER;
+import Backend.NamedEntityRecognition;
 import jakarta.mail.MessagingException;
-
-import java.util.Scanner;
-
-
-import java.util.Dictionary;
+import java.time.LocalDate;
+import java.util.*;
 
 
 public class Main {
 
     public static DataBase_connection DB = new DataBase_connection();
     public static Mail_manager mail = new Mail_manager();
+    public static NamedEntityRecognition NER = new NamedEntityRecognition();
 
     public static void main(String[] args) throws MessagingException {
         String[] credentials = checkNewUser();
 
         Notification("[+] Recognized data:" + credentials[0]);
         //Connect with user's email service provider
+        List<String[]> emails = unreadMailCheck();
 
-        unreadMailCheck();
+        if (emails.isEmpty()){
+            categorizeMail(emails);
+        }
 
         DB.CloseConnection();
 
@@ -35,16 +36,20 @@ public class Main {
 
         //unread emails to analyze, can be filtered out by looking for specific words in the sender and in the subject section
 
-        //extract only unread emails if they contain specific words from the wordlist
-        //4.- filter company names and add them to the DB
+        //DONE extract only unread emails if they contain specific words from the wordlist
+        //DONE-NEEDS TESTING 4.- filter company names and add them to the DB
         //sometimes the email will come from a hiring site instead of the actual company site
 
 
 
 
     }
+    //Classify the filtered emails
+    private static void categorizeMail(List<String[]>emails){
 
-    //check if the user has registered an email address into the database.
+    }
+
+    //Check if the user has registered an email address into the database.
     private static String[] checkNewUser(){
         Dictionary<String,String[]> dicResult = DB.QuerySQL("Auth","SELECT * FROM Auth;");
 
@@ -90,49 +95,77 @@ public class Main {
         };
     }
 
-    private static void unreadMailCheck(){
+    private static List<String[]> unreadMailCheck(){
         ///Gets number of unread emails, extract text data
         Notification("[+] Checking for unread emails");
         int num_mails = mail.emailCount();
         if (num_mails<0){
-            return;
+            return new ArrayList<>();
         }
         //extract content of the emails that are unread
         String [][] inbox = mail.readEmails();
+        List<String[]> inboxLst = new ArrayList<>(Arrays.asList(inbox));
         //TODO apply filters to look for corresponding job application emails
         //Filter out other emails
-
+        return senderFilter(inboxLst);
         //extract sender
 
-
-        System.out.println("pass");
     }
 
-    private String[][] senderFilter (String[][] emails){
+    private static List<String[]> senderFilter (List<String[]> emails) {
 
-        String[] senders =new String[emails.length];
+        //REMEMBER STRUCTURE VALUES [messageId, sender, subject, content]
 
-        for (int i=0; i<emails.length;i++){//go through all emails
+        Iterator<String[]> iterator = emails.iterator();
+
+        while (iterator.hasNext()){//go through all emails
             //remove all special characters from the extracted text except '@'
-            senders[i]= emails[i][0].replaceAll("[^\\p{L}\\p{N} @]","");
-            emails[i][0] = senders[i];
-        }
-        //Check if the senders are part of the DB of recruiter companies
-        //individual queries must be made in since the number of saved entries will end up bigger than the number or unread emails in the user's inbox
+            String[] mail = iterator.next();
+            String sender = mail[1].replaceAll("[^\\p{L}\\p{N} @]", "");
 
+            //ONLY REGISTER IN DB VALID EMIAL RESULTS or if they don't contain keywords like '@newsletter'
+            if (sender.toLowerCase().contains(".*newsletter*.")){
+                iterator.remove();
+                continue;
+            }
 
-        //is it alredy registered?
-        for (int i =0; i< senders.length;i++){
-            //note that company names cannot be identified easily with an NER but the company name is usually the same as the sender and found after the @
-            String query = String.format("SELECT 'Name' FROM Companies WHERE 'NAME'= %s",senders[i]);
-            if (!DB.QuerySQL("Companies",query).isEmpty()){
-                //check the type of email it is
+            //New company???
+            String query = String.format("SELECT 'Name' FROM Companies WHERE 'NAME'= %s", sender);
+
+            if (DB.QuerySQL("Companies", query).isEmpty()) {
+                //check if the email is relevant
+                //Obtain a score for the subject
+
+                try {
+                    boolean save = false;
+                    int[] scoreLst = NER.phraseMatching(mail[2]);
+                    for (int x=0;x<=4;x++){
+                        if (scoreLst[x]>=13){
+                            RegisterCompanyName(mail[1]);
+                            save=true;
+                            break;
+                        }
+                    }
+
+                    //remove irrelevant emails from the list
+                    if (!save){
+                        iterator.remove();
+                    }
+
+                } catch (Exception e) {
+                    Notification("[!] Error:\t" + e + "\n[!]Sender: "+sender);
+                }
             }
         }
-
         return emails;
     }
 
+
+    private static void RegisterCompanyName(String name){
+            String query = String.format("INSERT INTO 'Companies' VALUES 'Name'=%s, 'Last Update'=%s",
+                    name.replaceAll(".*@", ""), LocalDate.now().toString());
+            DB.SQLCommand(query);
+    }
 
 
 

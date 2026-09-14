@@ -147,7 +147,6 @@
     },
     "phrases": {
       "we regret to inform you": 10,
-      "unfortunately": 9,
       "after careful consideration": 9,
       "we have decided": 8,
       "move forward with other candidates": 10,
@@ -175,7 +174,8 @@
       "another applicant": 8,
       "another candidate": 8,
       "we wish you all the best": 8,
-      "thank you again for your interest": 7
+      "thank you again for your interest": 7,
+      "in a different direction": 8
     }
   },
   "followup": {

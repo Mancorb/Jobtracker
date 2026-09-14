@@ -1,6 +1,4 @@
 package Backend;
-import opennlp.tools.lemmatizer.DictionaryLemmatizer;
-import opennlp.tools.lemmatizer.Lemmatizer;
 import opennlp.tools.lemmatizer.LemmatizerME;
 import opennlp.tools.lemmatizer.LemmatizerModel;
 import opennlp.tools.namefind.NameFinderME;
@@ -16,13 +14,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Locale;
 import org.json.JSONObject;
 
-public class NER {
+public class NamedEntityRecognition {
 
     private JSONObject data;
 
@@ -99,8 +95,11 @@ public class NER {
         //generate 2-6 n-grams
         //obtain score for both words and phrases
 
+        //update the list based on engrams
+        score = NgramScore(cleaned_tokens,cls, score);
+
         for (int i = 0; i < score.length; i++) {//go through each classification
-            score = NgramScore(cleaned_tokens, cls[i], score);
+
             score[i] += wordScore(lem_lst, cls[i]);
 
         }
@@ -123,19 +122,19 @@ public class NER {
         return score;
     }
 
-    private int[] NgramScore(String[] tokens, String classification, int[] score) throws IOException {
+    private int[] NgramScore(String[] tokens, String[] classesLst ,int[] score) throws IOException {
         //go through the list of possible combinations and return the total scoring
         for (int size = 2; size <= 6; size++) { //make ngrams from 2 - 6 in size
             for (int i = 0; i <= tokens.length - size; i++) {
 
                 String phrase = String.join(" ", Arrays.copyOfRange(tokens, i, i + size));
 
-                for (int cls = 0; cls < score.length; cls++) {//go through each classification for every ngram
+                for (int j = 0; j < score.length; j++) {//go through each classification for every ngram
 
-                    int tempScore = phraseScore(phrase, classification);
+                    int tempScore = phraseScore(phrase, classesLst[j]);
 
                     if (tempScore > 0) {
-                        score[cls] += tempScore;
+                        score[j] += tempScore;
                     }
                 }
             }
