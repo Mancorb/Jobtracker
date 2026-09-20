@@ -3,7 +3,7 @@ import java.sql.*;
 import java.util.*;
 
 public class DataBase_connection {
-    private Connection connection= null;
+    private Connection connection;
 
     public DataBase_connection(){
         try {
@@ -28,12 +28,12 @@ public class DataBase_connection {
     //Reading and writing info into the DB
 
     public Dictionary<String,String[]> QuerySQL (String table,String sql){
-        ///Table will tell the method to check if it contains rows or if it exists without consuming too many resources or causing an error.
-        ///SQL is the actual query done if there are rows to retrieve from
+        //Table will tell the method to check if it contains rows or if it exists without consuming too many resources or causing an error.
+        //SQL is the actual query done if there are rows to retrieve from
         try {
 
             //Get a connection and prepare the query in the appropriate format
-            // This seccion checks if there are any rows to retrieve from the selected table
+            // This section checks if there are any rows to retrieve from the selected table
             Statement sqlQuery = this.connection.createStatement();
 
             String countSQL = String.format("SELECT COUNT(*) FROM %s;",table);
@@ -63,9 +63,7 @@ public class DataBase_connection {
     }
 
 
-    private Dictionary<String,String[]> ProcessSQLData(Dictionary<String,String[]> dataDic,
-                                                       ResultSet result,
-                                                       int rowCount) throws SQLException {
+    private Dictionary<String,String[]> ProcessSQLData(Dictionary<String,String[]> dataDic,ResultSet result,int rowCount) throws SQLException {
 
         ResultSetMetaData metadata = result.getMetaData();//extract metadata from result like column info
 

@@ -1,15 +1,9 @@
 package Backend;
 import opennlp.tools.lemmatizer.LemmatizerME;
 import opennlp.tools.lemmatizer.LemmatizerModel;
-import opennlp.tools.namefind.NameFinderME;
-import opennlp.tools.namefind.TokenNameFinderModel;
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTaggerME;
 import opennlp.tools.tokenize.SimpleTokenizer;
-import opennlp.tools.tokenize.TokenizerME;
-import opennlp.tools.tokenize.TokenizerModel;
-import opennlp.tools.util.Span;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -17,63 +11,13 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Locale;
 import org.json.JSONObject;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class NamedEntityRecognition {
 
     private JSONObject data;
 
-    //pretrained model to find people, and locations
-    public String[] main_text_NER(String text, String type) {
-        String model_loc = "src/main/resources/Models/";
-        String model_name;
-
-        if (type.contains("person")) {
-            model_name = model_loc + "en-ner-person.bin";
-        } else if (type.contains("location")) {
-            model_name = model_loc + "en-ner-location.bin";
-        } else {
-            throw new RuntimeException("Invalid input for 'type' variable obtained: " + type);
-        }
-
-
-        try {
-            //loading the tokenizer model
-            InputStream tokenModelIn = new FileInputStream(model_loc + "en-token.bin");
-            TokenizerModel tokenModel = new TokenizerModel(tokenModelIn);
-            TokenizerME tokenizer = new TokenizerME(tokenModel);
-
-            //tokenize the text
-            String[] tokens = tokenizer.tokenize(text);
-
-            //Load the NER model
-            InputStream nerModelIn = new FileInputStream(model_name);
-            TokenNameFinderModel nerModel = new TokenNameFinderModel(nerModelIn);
-            NameFinderME nameFinder = new NameFinderME(nerModel);
-
-            //Obtain results
-            Span[] spans = nameFinder.find(tokens);
-
-            //save results in array
-            String[] results = new String[spans.length];
-            int counter = 0;
-            for (Span span : spans) {
-                String entity = String.join(" ",
-                        Arrays.copyOfRange(tokens, span.getStart(), span.getEnd())
-                );
-                results[counter] = entity;
-                counter++;
-            }
-            tokenModelIn.close();
-            nerModelIn.close();
-
-            return results;
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-
-    }
 
     public int[] phraseMatching(String original_text) throws IOException {
         //Score list
@@ -106,7 +50,28 @@ public class NamedEntityRecognition {
         return score;
     }
 
+    public String jobTitleExtraction (String text){
+        for (Pattern pattern : PATTERNS){
+            Matcher matcher = pattern.matcher(text);
+
+            if (matcher.find()){
+                String title = cleanTitle(matcher.group(1));
+
+                if(!title.isEmpty()){
+                    return title;
+                }
+            }
+        }
+        return null;
+    }
     //note that the emails can have a sender of the service like linkedin and the company name may be in the email it self
+
+    private String cleanTitle(String title){
+        title = title.replaceAll("\\s+", " ").trim();//white spaces
+        title = title.replaceFirst("(?i)^(the|a|an)\\s+", "");//remove the first article like "the, a & an"
+        title = title.replaceAll("[\\s:;,.!?-]+$", "");//remove punctuation
+        return title.trim();
+    }
 
     private int wordScore(String[] lemTokens, String cls) throws IOException {
         String json = Files.readString(Path.of("src/main/resources/vocabulary.json"));
@@ -115,8 +80,8 @@ public class NamedEntityRecognition {
         JSONObject words = classification.getJSONObject("words");
         int score = 0;
         //check each word
-        for (int i = 0; i < lemTokens.length; i++) {
-            score += words.optInt(lemTokens[i], 0);
+        for (String lemToken : lemTokens) {
+            score += words.optInt(lemToken, 0);
         }
 
         return score;
@@ -160,9 +125,9 @@ public class NamedEntityRecognition {
 
     //Create a list of tokens followed by their respective POS tag
     private String[] POS_Tagger(String[] tokens) {
-        ///Returns String array of Position of speech tags from the input text
-        ///@param tokens tokenized text to do POS on
-        /// @return String[]
+        //Returns String array of Position of speech tags from the input text
+        //@param tokens tokenized text to do POS on
+        //@return String[]
 
 
         try {
@@ -198,5 +163,44 @@ public class NamedEntityRecognition {
             throw new RuntimeException(e);
         }
     }
+
+    private static final Pattern[] PATTERNS = {
+            // "application for Senior Backend Engineer position"
+            Pattern.compile(
+                    "(?:application|applying)\\s+(?:for|to)\\s+(?:the\\s+)?(.{2,100}?)(?:\\s+position|\\s+role)\\b",
+                    Pattern.CASE_INSENSITIVE
+            ),
+
+            // "your application for Senior Backend Engineer has..."
+            Pattern.compile(
+                    "(?:your\\s+)?application\\s+(?:for|to)\\s+(?:the\\s+)?(.{2,100}?)(?:\\s+(?:has|was|is|will)\\b)",
+                    Pattern.CASE_INSENSITIVE
+            ),
+
+            // "Senior Backend Engineer position"
+            Pattern.compile(
+                    "([A-Z][^.!?\\n]{2,100}?)\\s+(?:position|role)\\b",
+                    Pattern.CASE_INSENSITIVE
+            ),
+
+            // "position: Senior Backend Engineer"
+            Pattern.compile(
+                    "(?:job\\s+)?position\\s*[:\\-]\\s*([^\\n.!?]{2,100})",
+                    Pattern.CASE_INSENSITIVE
+            ),
+
+            // "role: Senior Backend Engineer"
+            Pattern.compile(
+                    "(?:job\\s+)?role\\s*[:\\-]\\s*([^\\n.!?]{2,100})",
+                    Pattern.CASE_INSENSITIVE
+            ),
+
+            // "Application received: Senior Backend Engineer"
+            Pattern.compile(
+                    "application\\s+(?:received|submitted)\\s*[:\\-]\\s*([^\\n.!?]{2,100})",
+                    Pattern.CASE_INSENSITIVE
+            )
+    };
+
 }
 
