@@ -138,7 +138,7 @@ public class NamedEntityRecognition {
             POSModel posModel = new POSModel(inputStreamPOSTagger);
             POSTaggerME posTagger = new POSTaggerME(posModel);
 
-            return posTagger.tag(tokens);///POS TAGS
+            return posTagger.tag(tokens);//POS TAGS
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -166,14 +166,12 @@ public class NamedEntityRecognition {
 
     private static final Pattern[] PATTERNS = {
             // "application for Senior Backend Engineer position"
-            Pattern.compile(
-                    "(?:application|applying)\\s+(?:for|to)\\s+(?:the\\s+)?(.{2,100}?)(?:\\s+position|\\s+role)\\b",
+            Pattern.compile("(?:application|applying)\\s+(?:for|to)\\s+(?:the\\s+)?(.{2,100}?)(?:\\s+position|\\s+role)\\b",
                     Pattern.CASE_INSENSITIVE
             ),
 
             // "your application for Senior Backend Engineer has..."
-            Pattern.compile(
-                    "(?:your\\s+)?application\\s+(?:for|to)\\s+(?:the\\s+)?(.{2,100}?)(?:\\s+(?:has|was|is|will)\\b)",
+            Pattern.compile("(?:your\\s+)?application\\s+(?:for|to)\\s+(?:the\\s+)?(.{2,100}?)(?:\\s+(?:has|was|is|will)\\b)",
                     Pattern.CASE_INSENSITIVE
             ),
 

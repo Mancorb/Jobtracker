@@ -1,7 +1,6 @@
 import Backend.DataBase_connection;
 import Backend.Mail_manager;
 import Backend.NamedEntityRecognition;
-import jakarta.mail.MessagingException;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -46,7 +45,6 @@ public class Main {
                 int[] Score = Main.NER.phraseMatching(mail[3]);
                 int max = 0;
                 int maxID = 0;
-                boolean tie = false;
                 for (int i=0; i<4;i++){
                     if (max<Score[i]){
                         max = Score[i];
