@@ -1,109 +1,73 @@
 package Backend;
 
-import com.opencsv.CSVReader;
-import com.opencsv.CSVReaderBuilder;
+import org.apache.commons.lang3.ObjectUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import java.io.IOException;
+import java.util.Arrays;
 
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.util.List;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 class NamedEntityRecognition_Test {
 
 
+    private NamedEntityRecognition NER;
+
+    private String[] texts = {
+            "Hello there,\n\n\nThank you for applying to Full Stack Software Engineer - AI-First (Java, Angular).\nYour profile is currently under review.\n\n\nHere's what happens next:We're reviewing your application against the roles requirements. If your profile shows strong alignment, well share it directly with the hiring team and theyll contact you to arrange next steps.",
+
+            "Thank you for your application. We appreciate your interest in working with us at [REDACTED] and your interest in Senior Test Manager IT/Automation.\n\nWe will review your application shortly, and get back to you as quickly as we can.\nWe wish you a wonderful day!\n\nKind regards\n[REDACTED NAME]\nRecruiter, [REDACTED]",
+
+            "Thank you for your interest in [REDACTED]. We appreciate the time you took to explore our opportunities and complete an application.\n\nAt this time, we've decided to not move forward with your candidacy for Senior Backend Engineer - Databases Pyroscope | Sweden | Remote position, but encourage you to keep an eye on our Careers Page and follow us on LinkedIn  for future opportunities as we grow!\n\nThank you,\n\nThe [REDACTED] Recruiting Team",
+
+            "Thank you for applying to [REDACTED]. Unfortunately [REDACTED] Applied AI Developer to a Digital Health Scale-up did not select you for further consideration. We wish you good luck with the other positions you have applied for. You are of course also very welcome to apply for an internship again next semester. The next application period is (16th July-16th August/16 December-16 January).",
+
+            "\"Hi,\nThank you for your application for the [REDACTED] position at [REDACTED].\nWe are very pleased to inform you that we would like to invite you to a first-round case interview. The interview will be conducted with [REDACTED] board members and a few fellow applicants and will take approximately 30 minutes. Each applicant will prepare and present a part of a case individually, followed by a group discussion to develop a final solution.\n\nTIME AND DATE\n\nYour interview will take place on:\n[REDACTED DATE AND TIME]\nLocation: [REDACTED]\nPlease confirm your attendance by replying to this email no later than [REDACTED]. Due to the high number of applicants, changing interview times may be difficult, so we kindly ask you to attend your assigned time slot and be on time.\nRemember to bring your own paper and pencil. If you have any trouble getting into the building, please call [REDACTED PHONE NUMBER] or [REDACTED PHONE NUMBER] no earlier than 10 minutes before your assigned time slot.\n\nPlease feel free to reach out if you have any questions.\nWe look forward to meeting you!\nBest regards,\n\n[REDACTED NAME] and the [REDACTED] board\"",
+
+            "Hello,\n\nYou have applied for a position as a software tester at [REDACTED]. I just wanted to check your availability. I understand that you are in your final semester and will be finishing your master's in [REDACTED]? Are you available to start immediately after that?"
+    };
+    @BeforeEach
+    void setUp() {
+        this.NER = new NamedEntityRecognition();
+    }
+
     @Test
-    //average time for processing a 2000 line csv 25 min
-    void scoring_general (){
-        NamedEntityRecognition namedEntityRecognition = new NamedEntityRecognition();
+    void phraseMatchingTest() {
+        int[] expected_results = {0, 0, 1, 1, 2, 2};
+        for (int ID = 0; ID < 5; ID++) {
+            try {
+                int category = expected_results[ID];
 
-        //read general_email.csv
-        int [][] totalScores = new int[2000][];
-
-        try{
-            String file = "src/main/resources/job_search_email_dataset_2000.csv";
-            FileReader filereader = new FileReader(file);
-
-            CSVReader csvReader = new CSVReaderBuilder(filereader).withSkipLines(1).build();
-
-            List<String[]>allData = csvReader.readAll();
-
-
-            int counter = 0;
-
-            for (String[] row: allData){
-                int[] tempScores_subject = namedEntityRecognition.phraseMatching(row[4]);
-                int[] tempScores_content = namedEntityRecognition.phraseMatching(row[5]);
-                int [] tempScoreLst = new int[4];
-
-                if ((counter)%100 == 0){
-                    System.out.println("Processing row: "+(counter)+ "  ");
+                if (ID == 3) {
+                    System.out.print("");
                 }
 
-                for(int i=0; i<tempScores_content.length;i++){
-                    tempScoreLst[i] = tempScores_subject[i]+tempScores_content[i];
+
+                int[] score = NER.phraseMatching(this.texts[ID]);
+                assertTrue(score[category] > 13);
+                System.out.println("[+]Scoring: " + Arrays.toString(score));
+                System.out.println("[+]Correct category should be:" + String.valueOf(category));
+
+                for (int val : score) {
+                    assertTrue(val <= score[category]);
                 }
 
-                totalScores[counter] = tempScoreLst;
-                counter +=1;
-
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
 
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
-
-        try(FileWriter writer = new FileWriter("src/main/resources/results.csv")){
-
-            for (int[] row : totalScores){
-                for (int i=0; i<3; i++){
-                    writer.write(Integer.toString(row[i]));
-
-                    if (i<2){
-                        writer.write(",");
-                    }
-                }
-                writer.write("\n");
-
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
 
     }
 
+    @Test
+    void jobTitleExtractionTest(){
+        String[] titles ={"Full Stack Software Engineer","Senior Test Manager","Senior Backend Engineer","Applied AI Developer"};
 
+        for (int i=0; i<3;i++){
+            assertTrue(NER.jobTitleExtraction(texts[i]).contains(titles[i]));
+        }
 
-//
-//    @Test
-//    void main_text_NER() {
-//        NER ner_obj = new NER();
-//        String phrase = "Dear Linkedin,\n" +
-//                "\n" +
-//                "Thank you for your interest in joining our team in our offices at Vancouver and for taking the time to submit your application for App Developer at Compileit.\n" +
-//                "\n" +
-//                "We have successfully received your application and appreciate the effort you put into sharing your experience and qualifications with us. Our recruitment team will review your application carefully as part of our selection process.\n" +
-//                "\n" +
-//                "If your qualifications match our current requirements, we will contact you regarding the next steps. In the meantime, we appreciate your patience while we review all applications.\n" +
-//                "\n" +
-//                "Thank you again for considering a career with us. We wish you the best of luck and appreciate your interest in our organization.\n" +
-//                "\n" +
-//                "Kind regards,\n" +
-//                "\n" +
-//                "Jannet Copperson\n" +
-//                "Compileit\n" +
-//                "Compileit@provider.org";
-//
-//        String[] person_result = ner_obj.main_text_NER(phrase,"person");
-//        String[] organization_result = ner_obj.main_text_NER(phrase,"location");
-//
-//        System.out.println(person_result[0]);
-//        System.out.println(organization_result[0]);
-//
-//
-//    }
-//
-//    @Test
-//    void job_Extraction() {
-//    }
+    }
 }

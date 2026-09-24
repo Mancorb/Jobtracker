@@ -2,14 +2,12 @@
   "confirmation": {
     "words": {
       "application": 5,
-      "received": 5,
+      "received": 7,
       "submitted": 5,
       "submission": 4,
       "apply": 4,
-      "applying": 4,
+      "applying": 2,
       "applicant": 4,
-      "thank": 3,
-      "thanks": 3,
       "interest": 3,
       "position": 3,
       "role": 3,
@@ -17,7 +15,6 @@
       "opportunity": 3,
       "review": 4,
       "reviewing": 4,
-      "consideration": 3,
       "process": 2,
       "processing": 3,
       "queue": 2,
@@ -54,44 +51,42 @@
       "professional": 1,
       "skills": 1,
       "learn": 1,
-      "career-growth": 1
+      "growth": 1
     },
     "phrases": {
-      "thank you for applying": 10,
-      "thank you for your application": 10,
-      "thank you for your interest": 9,
+      "thank you for applying": 5,
+      "thank you for your application": 5,
+      "thank you for your interest": 6,
       "we have received your application": 10,
       "your application has been received": 10,
       "we successfully received your application": 10,
       "application was received": 9,
-      "application has been submitted": 9,
-      "your application was sent": 8,
-      "we appreciate your interest": 8,
-      "we will review your application": 9,
-      "our team will review": 8,
-      "currently under review": 9,
+      "application has been submitted": 20,
+      "your application was sent": 25,
+      "we appreciate your interest": 6,
+      "we will review your application": 15,
+      "our team will review": 9,
+      "currently under review": 10,
       "under consideration": 8,
       "review process": 7,
-      "due to the volume of applications": 9,
-      "thank you for your patience": 8,
+      "due to the volume of applications": 5,
+      "thank you for your patience": 4,
       "we will be in touch": 8,
       "we will reach out": 8,
-      "if there is a potential fit": 9,
       "keep an eye on your inbox": 7,
-      "you will hear from us": 8,
+      "you will hear from us": 6,
       "next communication": 6,
       "your interest in joining": 8,
       "joining our team": 7,
-      "application confirmation": 10,
+      "application confirmation": 20,
       "we appreciate the time": 7,
       "your profile has been received": 8,
-      "your submission has been received": 9,
-      "we appreciate your application": 9
+      "your submission has been received": 9
     }
   },
   "rejection": {
     "words": {
-      "unfortunately": 5,
+      "unfortunately": 20,
       "regret": 5,
       "regretfully": 5,
       "unsuccessful": 5,
@@ -141,22 +136,26 @@
       "received": 1,
       "available": 1,
       "opening": 2,
-      "future-openings": 3,
       "luck": 2,
-      "sincerely": 1
+      "sincerely": 1,
+      "openings": 3
     },
     "phrases": {
+      "wish best": 5,
+      "thank for applying": 7,
+      "unfortunately moving forward": 10,
       "we regret to inform you": 10,
       "after careful consideration": 9,
       "we have decided": 8,
       "move forward with other candidates": 10,
       "moving forward with another candidate": 10,
-      "not moving forward": 10,
-      "you were not selected": 10,
-      "have not been selected": 10,
+      "not moving forward": 15,
+      "not move forward": 15,
+      "you were not selected": 20,
+      "have not been selected": 20,
       "position has been filled": 9,
       "role has been filled": 9,
-      "your application was unsuccessful": 10,
+      "your application was unsuccessful": 20,
       "we will not proceed": 9,
       "we cannot offer you": 9,
       "we appreciate your interest": 7,
@@ -238,7 +237,6 @@
       "connect": 3
     },
     "phrases": {
-      "Interview confirmation": 10,
       "we would like to invite you": 10,
       "invite you to interview": 10,
       "schedule an interview": 10,
@@ -268,7 +266,8 @@
       "join the interview": 9,
       "interview invitation": 10,
       "please complete": 7,
-      "assessment deadline": 8
+      "assessment deadline": 8,
+      "interview confirmation": 10
     }
   },
   "JobOffer": {
@@ -375,5 +374,4 @@
       "return the signed": 8
     }
   }
-
 }

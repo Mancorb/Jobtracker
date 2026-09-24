@@ -40,7 +40,7 @@ public class NamedEntityRecognition {
         //obtain score for both words and phrases
 
         //update the list based on engrams
-        score = NgramScore(cleaned_tokens,cls, score);
+        score = NgramScore(cleaned_tokens, cls, score);
 
         for (int i = 0; i < score.length; i++) {//go through each classification
 
@@ -50,14 +50,14 @@ public class NamedEntityRecognition {
         return score;
     }
 
-    public String jobTitleExtraction (String text){
-        for (Pattern pattern : PATTERNS){
+    public String jobTitleExtraction(String text) {
+        for (Pattern pattern : PATTERNS) {
             Matcher matcher = pattern.matcher(text);
 
-            if (matcher.find()){
+            if (matcher.find()) {
                 String title = cleanTitle(matcher.group(1));
 
-                if(!title.isEmpty()){
+                if (!title.isEmpty()) {
                     return title;
                 }
             }
@@ -66,7 +66,7 @@ public class NamedEntityRecognition {
     }
     //note that the emails can have a sender of the service like linkedin and the company name may be in the email it self
 
-    private String cleanTitle(String title){
+    private String cleanTitle(String title) {
         title = title.replaceAll("\\s+", " ").trim();//white spaces
         title = title.replaceFirst("(?i)^(the|a|an)\\s+", "");//remove the first article like "the, a & an"
         title = title.replaceAll("[\\s:;,.!?-]+$", "");//remove punctuation
@@ -87,8 +87,17 @@ public class NamedEntityRecognition {
         return score;
     }
 
-    private int[] NgramScore(String[] tokens, String[] classesLst ,int[] score) throws IOException {
+    private void showngrams(String[] tokens) {
+        for (int i = 0; i < tokens.length; i++) {
+            System.out.println(tokens[i]);
+        }
+    }
+
+    private int[] NgramScore(String[] tokens, String[] classesLst, int[] score) throws IOException {
         //go through the list of possible combinations and return the total scoring
+
+        //showngrams(tokens);
+
         for (int size = 2; size <= 6; size++) { //make ngrams from 2 - 6 in size
             for (int i = 0; i <= tokens.length - size; i++) {
 
@@ -164,9 +173,42 @@ public class NamedEntityRecognition {
         }
     }
 
+
+    // --- Seniority / level modifiers ---
+    private static final String SENIORITY =
+            "(?:Senior|Sr\\.?|Staff|Principal|Lead|Junior|Jr\\.?|Associate|Entry[- ]Level|Mid[- ]Level|Chief)";
+
+    // --- Tech/domain qualifiers that commonly prefix a generic role suffix ---
+    private static final String TECH_STACK =
+            "(?:Python|Java(?:Script)?|TypeScript|SQL|C\\+\\+|C#|PHP|Go(?:lang)?|Kotlin|Swift|Ruby|Rust|" +
+                    "React|Angular|Node\\.js|AWS|Azure|AI|ML|DevOps|Full[- ]Stack|Front[- ]End|Back[- ]End|Cloud|Cybersecurity)";
+
+    // --- Generic role-noun suffixes, so "<qualifier> + suffix" catches combos not in the fixed phrase list ---
+    private static final String GENERIC_ROLE_SUFFIX =
+            "(?:Developer|Engineer|Programmer|Architect|Consultant|Specialist|Manager|Tester|Analyst)";
+
+    // --- Fixed multi-word title phrases, spanning software and non-software fields ---
+    private static final String ROLE_NOUNS =
+            "(?:Software\\s+Engineer|Software\\s+Developer|Software\\s+Tester|Backend\\s+Engineer|Frontend\\s+Engineer|" +
+                    "Full[- ]Stack\\s+(?:Software\\s+)?(?:Engineer|Developer)|DevOps\\s+Engineer|Site\\s+Reliability\\s+Engineer|" +
+                    "Data\\s+Scientist|Data\\s+Analyst|Data\\s+Engineer|Machine\\s+Learning\\s+Engineer|" +
+                    "Cybersecurity\\s+Analyst|Cloud\\s+(?:Solutions\\s+)?Architect|Network\\s+Engineer|" +
+                    "QA\\s+Engineer|Quality\\s+Assurance\\s+Engineer|Test\\s+Manager|" +
+                    "Product\\s+Manager|Project\\s+Manager|Program\\s+Manager|Business\\s+Analyst|" +
+                    "Operations\\s+Manager|Marketing\\s+Manager|Digital\\s+Marketing\\s+Specialist|" +
+                    "Sales\\s+Representative|Account\\s+Executive|Customer\\s+Success\\s+Manager|" +
+                    "Financial\\s+Analyst|Accountant|Human\\s+Resources\\s+Manager|HR\\s+Specialist|" +
+                    "Recruiter|Talent\\s+Acquisition\\s+Specialist|" +
+                    "Registered\\s+Nurse|Nurse\\s+Practitioner|Physical\\s+Therapist|Occupational\\s+Therapist|" +
+                    "Mechanical\\s+Engineer|Electrical\\s+Engineer|Civil\\s+Engineer|" +
+                    "Graphic\\s+Designer|UX\\s+Designer|UI\\s+Designer|UX/UI\\s+Designer)";
+
+
     private static final Pattern[] PATTERNS = {
+
+
             // "application for Senior Backend Engineer position"
-            Pattern.compile("(?:application|applying)\\s+(?:for|to)\\s+(?:the\\s+)?(.{2,100}?)(?:\\s+position|\\s+role)\\b",
+            Pattern.compile("(?:application|applying)\\s+(?:for|to)\\s+(?:the\\s+)?(.{2,100}?)(?:\\s+position\\b|\\s+role\\b|[.!?\\n]|$)",
                     Pattern.CASE_INSENSITIVE
             ),
 
@@ -197,8 +239,14 @@ public class NamedEntityRecognition {
             Pattern.compile(
                     "application\\s+(?:received|submitted)\\s*[:\\-]\\s*([^\\n.!?]{2,100})",
                     Pattern.CASE_INSENSITIVE
+            ),
+            Pattern.compile(
+                    "\\b((?:" + SENIORITY + "\\s+)?(?:" + TECH_STACK + "\\s+" + GENERIC_ROLE_SUFFIX +
+                            "|(?:" + TECH_STACK + "\\s+)?" + ROLE_NOUNS + "))\\b",
+                    Pattern.CASE_INSENSITIVE
             )
     };
 
 }
+
 
