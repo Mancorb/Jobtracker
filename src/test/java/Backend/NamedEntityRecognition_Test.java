@@ -1,12 +1,9 @@
 package Backend;
-
-import org.apache.commons.lang3.ObjectUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 class NamedEntityRecognition_Test {
@@ -14,7 +11,7 @@ class NamedEntityRecognition_Test {
 
     private NamedEntityRecognition NER;
 
-    private String[] texts = {
+    private final String[] texts = {
             "Hello there,\n\n\nThank you for applying to Full Stack Software Engineer - AI-First (Java, Angular).\nYour profile is currently under review.\n\n\nHere's what happens next:We're reviewing your application against the roles requirements. If your profile shows strong alignment, well share it directly with the hiring team and theyll contact you to arrange next steps.",
 
             "Thank you for your application. We appreciate your interest in working with us at [REDACTED] and your interest in Senior Test Manager IT/Automation.\n\nWe will review your application shortly, and get back to you as quickly as we can.\nWe wish you a wonderful day!\n\nKind regards\n[REDACTED NAME]\nRecruiter, [REDACTED]",
