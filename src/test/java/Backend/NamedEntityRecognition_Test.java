@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.Arrays;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 class NamedEntityRecognition_Test {
@@ -24,6 +25,7 @@ class NamedEntityRecognition_Test {
 
             "Hello,\n\nYou have applied for a position as a software tester at [REDACTED]. I just wanted to check your availability. I understand that you are in your final semester and will be finishing your master's in [REDACTED]? Are you available to start immediately after that?"
     };
+
     @BeforeEach
     void setUp() {
         this.NER = new NamedEntityRecognition();
@@ -59,12 +61,29 @@ class NamedEntityRecognition_Test {
     }
 
     @Test
-    void jobTitleExtractionTest(){
-        String[] titles ={"Full Stack Software Engineer","Senior Test Manager","Senior Backend Engineer","Applied AI Developer"};
+    void jobTitleExtractionTest() {
+        String[] titles = {"Full Stack Software Engineer", "Senior Test Manager", "Senior Backend Engineer", "Applied AI Developer"};
 
-        for (int i=0; i<3;i++){
+        for (int i = 0; i < 3; i++) {
             assertTrue(NER.jobTitleExtraction(texts[i]).contains(titles[i]));
         }
 
+    }
+
+    @Test
+    void urlsDoNotInflateScore() throws IOException {
+        String email = "Hi there,\nThank you for your email, I would be most happy to assist you with your query.\n"
+                + "https://survey.example.invalid/form?gid=edbsn87f5a5f63e8ed92414a9092bed284b63"
+                + "&thd=edbsnfad912f103b6e1a1219122df15b9839c8cf26747586687f9ad766560236cd757&lang=en-US\n"
+                + "Leave us a review on https://reviews.example.invalid/company\n";
+        int[] score = NER.phraseMatching(email);
+        for (int s : score) assertTrue(s < 13);   // below the relevance threshold used in Main
+    }
+
+    @Test
+    void removeUrlsStripsLinks() {
+        String out = NER.URL_Purger("see https://a.example.invalid/x?y=1 or www.example.invalid now");
+        assertFalse(out.contains("invalid"));
+        assertTrue(out.contains("see"));
     }
 }

@@ -11,6 +11,8 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Locale;
 import org.json.JSONObject;
+
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,15 +20,44 @@ public class NamedEntityRecognition {
 
     private JSONObject data;
 
+    private String extractVisibleText(String html) {
+        // jsoup drops <style>/<script>/<head> content, decodes entities correctly,
+        // and returns only the rendered text.
+        return org.jsoup.Jsoup.parse(html).text();
+    }
+
+    private String stripHistory(String text) {
+        int earliest = -1;
+        for (Pattern p : HISTORY_MARKERS) {
+            Matcher m = p.matcher(text);
+            if (m.find()) {
+                if (earliest == -1 || m.start() < earliest) earliest = m.start();
+            }
+        }
+        return (earliest == -1 ? text : text.substring(0, earliest)).stripTrailing();
+    }
+
+    private String URL_Purger(String text) {
+        text = extractVisibleText(text);              // was: HTML_BLOCKS/COMMENTS/TAGS/ENTITIES/CSS chain
+        text = URL_PATTERN.matcher(text).replaceAll(" ");
+        text = EMAIL_ADDR_PATTERN.matcher(text).replaceAll(" ");
+        text = PHONE_PATTERN.matcher(text).replaceAll(" ");
+        return text;
+    }
 
     public int[] phraseMatching(String original_text) throws IOException {
         //Score list
         int[] score = {0, 0, 0, 0};//confirmation, rejection, followup, JobOffer
         String[] cls = {"confirmation", "rejection", "followup", "JobOffer"};
 
+
+        //delete any urls
         //Lowercase the text
         //Tokenize the text
-        String[] tokens = tokenizer(original_text.toLowerCase());
+        String[] tokens = tokenizer(URL_Purger(stripHistory(original_text)).toLowerCase());
+
+        //remove URLS to reduce the number of tokens
+
 
         //remove punctuation
         //turn to java stream, map (transform each element), filter out if the condition is true using regex, convert a stream back into a string[]
@@ -38,14 +69,14 @@ public class NamedEntityRecognition {
 
         //generate 2-6 n-grams
         //obtain score for both words and phrases
-
-        //update the list based on engrams
-        score = NgramScore(cleaned_tokens, cls, score);
-
         for (int i = 0; i < score.length; i++) {//go through each classification
 
             score[i] += wordScore(lem_lst, cls[i]);
 
+        }
+        if (Arrays.stream(score).anyMatch(x -> x > 13)) {
+            //update the list based on engrams
+            score = NgramScore(cleaned_tokens, cls, score);
         }
         return score;
     }
@@ -128,7 +159,7 @@ public class NamedEntityRecognition {
         SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
         String[] tokens = tokenizer.tokenize(Text);
         return Arrays.stream(tokens).map(token -> token.toLowerCase(Locale.ROOT))
-                .filter(token -> token.matches("[a-z]+"))
+                .filter(token -> token.matches("[a-z]{2,}")&& !NON_WORDS.contains(token))
                 .toArray(String[]::new);
     }
 
@@ -246,6 +277,36 @@ public class NamedEntityRecognition {
                     Pattern.CASE_INSENSITIVE
             )
     };
+
+    private static final Pattern[] HISTORY_MARKERS = {
+            // "On Mon, 22 Sep 2026 at 14:03, John Smith <j@x.com> wrote:"
+            Pattern.compile("^On .{0,120}wrote:\\s*$", Pattern.MULTILINE | Pattern.CASE_INSENSITIVE),
+            // "-----Original Message-----"
+            Pattern.compile("^-{2,}\\s*Original Message\\s*-{2,}\\s*$", Pattern.MULTILINE | Pattern.CASE_INSENSITIVE),
+            // Outlook-style header block: From/Sent/To/(Cc)/Subject
+            Pattern.compile("^From:\\s.+\\nSent:\\s.+\\nTo:\\s.+\\n(?:Cc:\\s.+\\n)?Subject:\\s.+", Pattern.MULTILINE | Pattern.CASE_INSENSITIVE),
+            // Outlook separator line, a long run of underscores
+            Pattern.compile("^_{10,}\\s*$", Pattern.MULTILINE),
+            // first '>' quoted line
+            Pattern.compile("^>{1,}.*$", Pattern.MULTILINE),
+            // mobile signature that often sits right before quoted text
+            Pattern.compile("^Sent from my (?:iPhone|iPad|Android|Samsung).*$", Pattern.MULTILINE | Pattern.CASE_INSENSITIVE),
+    };
+
+    private static final Pattern URL_PATTERN = Pattern.compile("(?i)\\b(?:https?://|ftp://|www\\.)\\S+");
+    private static final Pattern EMAIL_ADDR_PATTERN = Pattern.compile("\\S+@\\S+\\.\\S+");
+    private static final Pattern PHONE_PATTERN = Pattern.compile("(?<!\\w)(?:\\+?\\d{1,3}[-.\\s]?)?(?:\\(?\\d{2,4}\\)?[-.\\s]?)?\\d{3,4}[-.\\s]?\\d{3,4}(?!\\w)");
+
+    // Tokens that are markup/CSS/font names rather than language.
+    private static final Set<String> NON_WORDS = Set.of(
+            "div","span","td","tr","th","tbody","thead","table","br","hr","img","src","href","alt","nbsp","amp","quot",
+            "px","pt","rem","rgb","rgba","css","html","xml","doctype","meta","charset","utf","viewport","xmlns","mso",
+            "webkit","moz","https","http","www","cid","mailto",
+            "font","fonts","family","serif","sans","arial","helvetica","verdana","tahoma","calibri","georgia","times",
+            "roman","courier","monospace","segoe","roboto","geneva","lucida","trebuchet",
+            "cellpadding","cellspacing","colspan","rowspan","valign","align","bgcolor","nowrap","border",
+            "padding","margin","width","height","important","inherit","solid","transparent","opacity",
+            "nofollow","noreferrer","ltr","rtl");
 
 }
 

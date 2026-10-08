@@ -3,13 +3,18 @@ import Backend.Mail_manager;
 import Backend.NamedEntityRecognition;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class Main {
 
+    //TODO test the program with a handfull of test emails step by step to verify it works consistently and monitor output
+
     public static DataBase_connection DB = new DataBase_connection();
     public static Mail_manager mail = new Mail_manager();
     public static NamedEntityRecognition NER = new NamedEntityRecognition();
+    private static final Pattern EMAIL_EXTRACT_PATTERN = Pattern.compile("[\\w.+-]+@[\\w-]+(?:\\.[\\w-]+)+");
 
     public static void main(String[] args) {
         String[] credentials = checkNewUser();
@@ -23,6 +28,8 @@ public class Main {
         }
 
         //Convert processed emails to 'read'
+
+        //TODO issues when marking as read
         Iterator<String[]> iterator = emails.iterator();
         while (iterator.hasNext()){
             String[] message = iterator.next();
@@ -164,7 +171,6 @@ public class Main {
         //extract content of the emails that are unread
         String [][] inbox = Main.mail.readEmails();
         List<String[]> inboxLst = new ArrayList<>(Arrays.asList(inbox));
-        //TODO apply filters to look for corresponding job application emails
         //Filter out other emails
         return senderFilter(inboxLst);
         //extract sender
@@ -180,14 +186,14 @@ public class Main {
         while (iterator.hasNext()){//go through all emails
             //remove all special characters from the extracted text except '@'
             String[] mail = iterator.next();
-            String sender = mail[1].replaceAll("[^\\p{L}\\p{N} @]", "");
+            Matcher emailMatcher = EMAIL_EXTRACT_PATTERN.matcher(mail[0]);
+            String sender = emailMatcher.find() ? emailMatcher.group() : "";
 
-            //ONLY REGISTER IN DB VALID EMIAL RESULTS or if they don't contain keywords like '@newsletter'
-            if (sender.toLowerCase().contains(".*newsletter*.")){
+            //ONLY REGISTER IN DB VALID EMIAL RESULTS or if they don't contain keywords like '@newsletter' ro customer service
+            if (sender.toLowerCase().contains("newsletter") || sender.toLowerCase().contains("support")) {
                 iterator.remove();
                 continue;
             }
-
             //New company???
             String query = String.format("SELECT 'Name' FROM Companies WHERE 'NAME'= %s", sender);
 
@@ -198,7 +204,7 @@ public class Main {
                 try {
                     boolean save = false;
                     int[] scoreLst = Main.NER.phraseMatching(mail[2]);
-                    for (int x=0;x<=4;x++){
+                    for (int x=0;x<4;x++){
                         if (scoreLst[x]>=13){
                             RegisterCompanyName(mail[1]);
                             save=true;
