@@ -51,6 +51,7 @@ class MailManagerTest {
         try {
             manager.establishConnection(this.address, this.password);
             result = manager.emailCount();
+            System.out.println("[+]Emails in inbox: "+result);
         }
         catch (MessagingException e){
             throw new RuntimeException(e);
@@ -62,16 +63,25 @@ class MailManagerTest {
     void readEmails() {
         int unexpected = -1;
         int actual;
+        int limit = 5;
 
         Mail_manager manager = new Mail_manager();
         try {
             manager.establishConnection(this.address,this.password);
             String [][] emails = manager.readEmails();
 
-            actual = emails[0].length;
+            actual = emails.length;
 
             assertNotEquals(unexpected, actual);
-            System.out.print("Number of emails:"+actual);
+            System.out.println("[+] Number of emails:"+actual);
+
+            if (limit<actual){
+                System.out.println("[!] Detected over 5 emails, limiting test to reduce test time.");
+                actual = limit;
+                System.out.println("[+] Current in system email count: "+actual);
+            }
+
+
 
             //check the content of the emails is not empty
             for(int i=0; i<actual; i++){

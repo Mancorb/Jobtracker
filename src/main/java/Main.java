@@ -24,8 +24,11 @@ public class Main {
         List<String[]> emails = unreadMailCheck();
 
         if (emails.isEmpty()){
-            categorizeMail(emails);
+            DB.CloseConnection();
+            Notification("[+] No new emails, come back later.");
+            System.exit(0);
         }
+        categorizeMail(emails);
 
         //Convert processed emails to 'read'
 
@@ -165,7 +168,7 @@ public class Main {
 
         Notification("[+] Checking for unread emails");
         int num_mails = Main.mail.emailCount();
-        if (num_mails<0){
+        if (num_mails==0){
             return new ArrayList<>();
         }
         //extract content of the emails that are unread
@@ -179,7 +182,7 @@ public class Main {
 
     private static List<String[]> senderFilter (List<String[]> emails) {
 
-        //REMEMBER STRUCTURE VALUES [messageId, sender, subject, content]
+        //REMEMBER STRUCTURE VALUES [sender, subject, content]
 
         Iterator<String[]> iterator = emails.iterator();
 
@@ -202,21 +205,21 @@ public class Main {
                 //Obtain a score for the subject
 
                 try {
-                    boolean save = false;
-                    int[] scoreLst = Main.NER.phraseMatching(mail[2]);
+                    //first scan evaluates only the email's subject not the main text
+                    int[] scoreLst = Main.NER.phraseMatching(mail[1]);
+                    System.out.println("[]-"+mail[1]+"\nScore:"+ Arrays.toString(scoreLst));
+
+                    int max_scr = 0;
+
                     for (int x=0;x<4;x++){
-                        if (scoreLst[x]>=13){
-                            RegisterCompanyName(mail[1]);
-                            save=true;
-                            break;
-                        }
+                        max_scr =+ scoreLst[x];
                     }
 
-                    //remove irrelevant emails from the list
-                    if (!save){
-                        iterator.remove();
+                    if (max_scr >=5) {
+                        RegisterCompanyName(mail[0]);
+                    }else{
+                        iterator.remove();//remove irrelevant emails from the list
                     }
-
                 } catch (Exception e) {
                     Notification("[!] Error:\t" + e + "\n[!]Sender: "+sender);
                 }

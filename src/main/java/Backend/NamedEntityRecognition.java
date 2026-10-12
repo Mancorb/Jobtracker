@@ -37,7 +37,7 @@ public class NamedEntityRecognition {
         return (earliest == -1 ? text : text.substring(0, earliest)).stripTrailing();
     }
 
-    private String URL_Purger(String text) {
+    public String URL_Purger(String text) {
         text = extractVisibleText(text);              // was: HTML_BLOCKS/COMMENTS/TAGS/ENTITIES/CSS chain
         text = URL_PATTERN.matcher(text).replaceAll(" ");
         text = EMAIL_ADDR_PATTERN.matcher(text).replaceAll(" ");
