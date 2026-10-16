@@ -33,11 +33,11 @@ public class Main {
         //Convert processed emails to 'read'
 
         //TODO issues when marking as read
-        Iterator<String[]> iterator = emails.iterator();
-        while (iterator.hasNext()){
-            String[] message = iterator.next();
-            Main.mail.markMailAsRead(Integer.parseInt(message[0]));
-        }
+        //Iterator<String[]> iterator = emails.iterator();
+        //while (iterator.hasNext()){
+        //    String[] message = iterator.next();
+        //    Main.mail.markMailAsRead(Integer.parseInt(message[0]));
+        //}
 
         DB.CloseConnection();
 
@@ -198,21 +198,22 @@ public class Main {
                 continue;
             }
             //New company???
-            String query = String.format("SELECT 'Name' FROM Companies WHERE 'NAME'= %s", sender);
+            String query = String.format("SELECT Email FROM Companies WHERE Email= '%s'", sender);
+            Dictionary<String,String[]> temp = Main.DB.QuerySQL("Companies", query);
 
-            if (Main.DB.QuerySQL("Companies", query).isEmpty()) {
+            if (temp.size()==0 || temp.get("Email")[0]==null) {
                 //check if the email is relevant
                 //Obtain a score for the subject
 
                 try {
                     //first scan evaluates only the email's subject not the main text
                     int[] scoreLst = Main.NER.phraseMatching(mail[1]);
-                    System.out.println("[]-"+mail[1]+"\nScore:"+ Arrays.toString(scoreLst));
+                    //System.out.println("[]-"+mail[1]+"\nScore:"+ Arrays.toString(scoreLst));
 
                     int max_scr = 0;
 
                     for (int x=0;x<4;x++){
-                        max_scr =+ scoreLst[x];
+                        max_scr = max_scr + scoreLst[x];
                     }
 
                     if (max_scr >=5) {
@@ -229,9 +230,22 @@ public class Main {
     }
 
 
-    private static void RegisterCompanyName(String name){
-            String query = String.format("INSERT INTO 'Companies' VALUES 'Name'=%s, 'Last Update'=%s",
-                    name.replaceAll(".*@", ""), LocalDate.now().toString());
+    private static void RegisterCompanyName(String raw_name){
+            raw_name = raw_name.replaceAll("[\\[\\]]", "");//delete format
+
+            Matcher emailMatcher = EMAIL_EXTRACT_PATTERN.matcher(raw_name); // extract email address
+            String email = emailMatcher.find() ? emailMatcher.group() : "";
+
+            String name = EMAIL_EXTRACT_PATTERN.matcher(raw_name)//extract a name (if possible)
+                .replaceAll("")
+                .replaceAll("[<> ,]", "")
+                .trim();
+
+            if (name.isEmpty()){
+                name = "-";
+            }
+
+            String query = String.format("INSERT INTO Companies (Name, \"Last Update\", Email) VALUES ('%s','%s','%s')",name, LocalDate.now().toString(),email);
             Main.DB.SQLCommand(query);
     }
 

@@ -37,9 +37,13 @@ class DataBase_connectionTest {
 
         String query = "INSERT INTO Locations VALUES(9999,'Terra','Golden Throne');";
 
+        //successful connection
         assertTrue(this.db.SQLCommand(query));
+        //assert if data was inserted
+        assertNotNull(this.db.QuerySQL("Locations","SELECT * FROM Locations WHERE ID=9999"));
         query = "DELETE FROM Locations WHERE ID=9999";
-        assertTrue(db.SQLCommand(query));
+        assertTrue(this.db.SQLCommand(query));
+        assertEquals(this.db.QuerySQL("Locations","SELECT * FROM Locations WHERE ID=9999").size(),0);
 
     }
 
@@ -66,7 +70,7 @@ class DataBase_connectionTest {
 
         String query = "DELETE FROM Locations WHERE ID=9999";
 
-        assertTrue(db.SQLCommand(query));
+        assertTrue(this.db.SQLCommand(query));
 
     }
 
