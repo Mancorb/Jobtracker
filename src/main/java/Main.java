@@ -1,10 +1,16 @@
 import Backend.DataBase_connection;
 import Backend.Mail_manager;
 import Backend.NamedEntityRecognition;
+
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 public class Main {
@@ -31,6 +37,8 @@ public class Main {
         categorizeMail(emails);
 
         //Convert processed emails to 'read'
+        dicMap(emails);
+
 
         //TODO issues when marking as read
         //Iterator<String[]> iterator = emails.iterator();
@@ -43,16 +51,46 @@ public class Main {
 
 
     }
+
+    //temp***
+    private static void dicMap (List<String[]> emails){
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.writerWithDefaultPrettyPrinter().writeValue(new File("src/main/resources/dictionary.json"), emails);
+        } catch (IOException e) {
+            Notification("[!]Error:\n"+e);
+        }
+    }
+    private List<String[]> MapReader (){
+        try {
+        ObjectMapper mapper = new ObjectMapper();
+        List<String[]>emails = null;
+
+            emails = mapper.readValue(
+                    new File("src/main/resources/dictionary.json"),
+                    new TypeReference<List<String[]>>() {}
+            );
+            return emails;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     //Classify the filtered emails
     private static void categorizeMail(List<String[]>emails){
-        //REMEMBER STRUCTURE VALUES [messageId, sender, subject, content]
+        //REMEMBER STRUCTURE VALUES [sender, subject, content]
         //Add the score of the subject and the text for each one
         Iterator<String[]> iterator = emails.iterator();
 
+
+
         while (iterator.hasNext()){
             String[] mail = iterator.next();
+            //clean the email
+            mail[2] = Main.NER.URL_Purger(mail[2]);
+
             try {
-                int[] Score = Main.NER.phraseMatching(mail[3]);
+                int[] Score = Main.NER.phraseMatching(mail[2]);
                 int max = 0;
                 int maxID = 0;
                 for (int i=0; i<4;i++){
@@ -84,28 +122,35 @@ public class Main {
                 String Location = "";
 
                 //update date of modification
-                String query = String.format("UPDATE 'Companies' SET 'Last Update'=%s WHERE 'Name'=%s",
-                        LocalDate.now().toString(), mail[1]);
-                Main.DB.SQLCommand(query);
+                Matcher emailMatcher = EMAIL_EXTRACT_PATTERN.matcher(mail[0]);
+                String sender = emailMatcher.find() ? emailMatcher.group() : "";
+
+                String query = "";
+                String job_title = Main.NER.jobTitleExtraction(mail[2]);
+                String ID = sender+"-"+job_title;
+                query = String.format("SELECT ID FROM JobApplications WHERE 'ID'='%s'",sender);
+                //check if the application already is saved in the DB
+                Dictionary<String,String[]> ID_query = Main.DB.QuerySQL("JobApplications",query);
 
 
-                String job_title = Main.NER.jobTitleExtraction(mail[3]);
-                String ID = mail[1].split("\\s+")[0]+job_title;
-
-                //update job application registry
-                if (maxID != 0){
-                    query = String.format("UPDATE JobApplications SET 'State'='%s',WHERE 'ID'=%s",
+                //update EXISTING job application registry
+                if (ID_query.size()!=0 && ID_query.get("ID")[0]!=null && maxID!=0){
+                    query = String.format("UPDATE JobApplications SET 'State'='%s',WHERE 'ID'='%s'",
                                             classification,ID);
 
                 }
                 else{//new job application registry
+                    query  = String.format("SELECT ID FROM Companies WHERE Email LIKE '%%%s%%';",sender);
 
-                    Dictionary<String,String[]> ID_query = Main.DB.QuerySQL("Companies","SELECT ID WHERE Name="+mail[1]);//company name + job position
+                    ID_query = Main.DB.QuerySQL("Companies",query);//company name + job position
 
                     //ID,title,date,state,link,company ID, Description, Location ID
-                    query = String.format("INSERT INTO 'JobApplications' VALUES '%s','%s','%s','Sent','','%s','%s',''",
-                                            ID, job_title,LocalDate.now().toString(),ID_query.get("ID")[0],Location);
+                    query = String.format("INSERT INTO JobApplications (ID,Title,ApplicationDate,State,Company,Description) VALUES ('\"%s\"','\"%s\"','\"%s\"','\"%s\"',%s,'\"%s\"');",
+                            ID, job_title,LocalDate.now().toString(),classification,ID_query.get("ID")[0],mail[2]);
                 }
+                //TODO there is an SQL query that is sending an SQLite Exception URLS are getting leaked in the query
+                //TODO make sure it is ONLY extracting text no url nor emotes.
+                System.out.println(query);
                 Main.DB.SQLCommand(query);
 
 
@@ -243,10 +288,18 @@ public class Main {
 
             if (name.isEmpty()){
                 name = "-";
+            }else if (name.contains("-")){
+                name = name.substring(name.indexOf("-") + 1); //save all after the '-'
+            }
+            String query = String.format("SELECT \"Name\" FROM Companies WHERE NAME = '\"%s\"' AND NAME !='-';",name);
+            Dictionary<String,String[]> temp = Main.DB.QuerySQL("Companies",query);
+
+            if (temp.size()==0 || temp.get("Name")[0]==null){
+                query = String.format("INSERT INTO Companies (Name, \"Last Update\", Email) VALUES ('\"%s\"','\"%s\"','\"%s\"')",name, LocalDate.now().toString(),email);
+                Main.DB.SQLCommand(query);
             }
 
-            String query = String.format("INSERT INTO Companies (Name, \"Last Update\", Email) VALUES ('%s','%s','%s')",name, LocalDate.now().toString(),email);
-            Main.DB.SQLCommand(query);
+
     }
 
 
