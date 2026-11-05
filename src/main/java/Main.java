@@ -15,8 +15,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Main {
 
-    //TODO test the program with a handfull of test emails step by step to verify it works consistently and monitor output
-
     public static DataBase_connection DB = new DataBase_connection();
     public static Mail_manager mail = new Mail_manager();
     public static NamedEntityRecognition NER = new NamedEntityRecognition();
@@ -37,43 +35,24 @@ public class Main {
         categorizeMail(emails);
 
         //Convert processed emails to 'read'
-        dicMap(emails);
-
 
         //TODO issues when marking as read
-        //Iterator<String[]> iterator = emails.iterator();
-        //while (iterator.hasNext()){
-        //    String[] message = iterator.next();
-        //    Main.mail.markMailAsRead(Integer.parseInt(message[0]));
-        //}
+        Iterator<String[]> iterator = emails.iterator();
+        String[] senders = new String[emails.size()];
+        String[] subjects = new String[emails.size()];
+        int counter = 0;
+        while (iterator.hasNext()){
+             String[] temp= iterator.next();
+             senders[counter] = temp[0];
+             subjects[counter] = temp[1];
+             counter = counter + 1;
+
+        }
+        Main.mail.markMailAsRead(senders,subjects);
 
         DB.CloseConnection();
 
 
-    }
-
-    //temp***
-    private static void dicMap (List<String[]> emails){
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.writerWithDefaultPrettyPrinter().writeValue(new File("src/main/resources/dictionary.json"), emails);
-        } catch (IOException e) {
-            Notification("[!]Error:\n"+e);
-        }
-    }
-    private List<String[]> MapReader (){
-        try {
-        ObjectMapper mapper = new ObjectMapper();
-        List<String[]>emails = null;
-
-            emails = mapper.readValue(
-                    new File("src/main/resources/dictionary.json"),
-                    new TypeReference<List<String[]>>() {}
-            );
-            return emails;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     //Classify the filtered emails
@@ -270,7 +249,6 @@ public class Main {
         }
         return emails;
     }
-
 
     private static void RegisterCompanyName(String raw_name){
             raw_name = raw_name.replaceAll("[\\[\\]]", "");//delete format

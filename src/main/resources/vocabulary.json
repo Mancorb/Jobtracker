@@ -275,6 +275,7 @@
   },
   "JobOffer": {
     "words": {
+      "experience": 4,
       "connect": 4,
       "offer": 5,
       "offering": 5,

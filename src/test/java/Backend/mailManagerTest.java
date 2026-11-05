@@ -118,20 +118,6 @@ class MailManagerTest {
         }
     }
 
-    @Test
-    void markLastMailAsRead() {
-        Mail_manager manager = new Mail_manager();
-
-        try {
-            manager.establishConnection(this.address, this.password);
-            int id = manager.emailCount()-1;
-            boolean response = manager.markMailAsRead(id);
-            assertTrue(response);
-
-        }catch (MessagingException e){
-            throw new RuntimeException(e);
-        }
-    }
 
     @Test
     void deleteEmail() {

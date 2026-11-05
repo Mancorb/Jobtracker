@@ -117,22 +117,32 @@ public class Mail_manager {
 }
 
     //Mark an unread email as read based on array position
-    public boolean markMailAsRead(int mail_ID){
+    public boolean markMailAsRead(String[] senders, String[] subjects){
         try {
 
             Folder inbox = this.store.getFolder("inbox");
             inbox.open(Folder.READ_WRITE);
 
             //find unseen messages
-            Message[] messages = MailListGetter(inbox, true);
-            if (messages.length >= mail_ID - 1) {
-                try {
-                    Message targetMessage = messages[mail_ID];
-                    targetMessage.setFlag(Flags.Flag.SEEN, true);
-                    return true; //return true if the change was successful
+            Message[] messages = inbox.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false));
+            int mail_count = inbox.getUnreadMessageCount();
 
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
+            for (Message message : messages ) {
+                //get sender info
+                Address[] fromAddresses = message.getFrom();
+                InternetAddress address = (InternetAddress) fromAddresses[0];
+                String mail_senders = address.getAddress();
+                //get subject info
+                String mail_subject = message.getSubject();
+
+                for (int i =0; i<senders.length;i++){
+                    if (senders[i].contains(mail_senders) || subjects[i].contains(mail_subject)){
+                        message.setFlag(Flags.Flag.SEEN,true);
+
+                        String notification = String.format("[+] Sender: %s\t%s\n[+] Matched with: %s\t%s",mail_senders,mail_subject,senders[i],subjects[i]);
+                        System.out.println(notification);
+                        break;
+                    }
                 }
 
             }
