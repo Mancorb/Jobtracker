@@ -35,8 +35,6 @@ public class Main {
         categorizeMail(emails);
 
         //Convert processed emails to 'read'
-
-        //TODO issues when marking as read
         Iterator<String[]> iterator = emails.iterator();
         String[] senders = new String[emails.size()];
         String[] subjects = new String[emails.size()];
