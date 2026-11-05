@@ -1,0 +1,145 @@
+package Backend;
+
+import jakarta.mail.MessagingException;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class MailManagerTest {
+
+    private String address;
+    private String password;
+
+
+    @BeforeEach
+    void setup() {
+        this.address = System.getenv("GMAIL_USER");
+        this.password = System.getenv("GMAIL_APP_PASS");
+    }
+
+    @Test
+    void establishConnection() {
+        Mail_manager manager = new Mail_manager();
+
+        try {
+            manager.establishConnection(this.address, this.password);
+        } catch (MessagingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void sendTestEmail(){
+        Mail_manager manager = new Mail_manager();
+        try{
+            manager.establishConnection(this.address,this.password);
+            assertTrue(manager.sendTestEmail(this.address,this.password));
+
+        }catch (MessagingException e){
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void emailCount(){
+        Mail_manager manager = new Mail_manager();
+        int result =-1;
+        try {
+            manager.establishConnection(this.address, this.password);
+            result = manager.emailCount();
+            System.out.println("[+]Emails in inbox: "+result);
+        }
+        catch (MessagingException e){
+            throw new RuntimeException(e);
+        }
+        Assertions.assertTrue(result>=0);
+    }
+
+    @Test
+    void readEmails() {
+        int unexpected = -1;
+        int actual;
+        int limit = 5;
+
+        Mail_manager manager = new Mail_manager();
+        try {
+            manager.establishConnection(this.address,this.password);
+            String [][] emails = manager.readEmails();
+
+            actual = emails.length;
+
+            assertNotEquals(unexpected, actual);
+            System.out.println("[+] Number of emails:"+actual);
+
+            if (limit<actual){
+                System.out.println("[!] Detected over 5 emails, limiting test to reduce test time.");
+                actual = limit;
+                System.out.println("[+] Current in system email count: "+actual);
+            }
+
+
+
+            //check the content of the emails is not empty
+            for(int i=0; i<actual; i++){
+                for(int j=0;j<3;j++) {
+                    assertNotEquals(0, emails[i][j].length());
+                }
+            }
+
+
+        } catch (MessagingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void ReadEmails_latest(){
+        Mail_manager manager = new Mail_manager();
+
+        try{
+            manager.establishConnection(this.address,this.password);
+            String[][]messages = manager.readEmails();
+
+            assertNotNull(messages[0][0]);
+            System.out.println("Latest email:\n");
+            int id = messages.length-1;
+
+            for(int i=0; i<messages[0].length; i++){
+                System.out.println(messages[id][i]);
+            }
+
+
+        }catch (MessagingException e){
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    @Test
+    void deleteEmail() {
+        Mail_manager manager = new Mail_manager();
+
+        try{
+            manager.establishConnection(this.address,this.password);
+
+            //send test email to delete only if one has not been sent before
+            manager.sendTestEmail(this.address, this.password);
+
+            int init_num_msg = manager.emailCount();
+
+            assertTrue(manager.deleteEmail(init_num_msg-1,false));
+
+            int fin_num_msg = manager.emailCount();
+
+            assertNotEquals(init_num_msg,fin_num_msg);
+
+
+        }catch(MessagingException e){
+            throw new RuntimeException(e);
+        }
+    }
+}
