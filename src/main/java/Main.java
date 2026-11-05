@@ -148,9 +148,6 @@ public class Main {
                     query = String.format("INSERT INTO JobApplications (ID,Title,ApplicationDate,State,Company,Description) VALUES ('\"%s\"','\"%s\"','\"%s\"','\"%s\"',%s,'\"%s\"');",
                             ID, job_title,LocalDate.now().toString(),classification,ID_query.get("ID")[0],mail[2]);
                 }
-                //TODO there is an SQL query that is sending an SQLite Exception URLS are getting leaked in the query
-                //TODO make sure it is ONLY extracting text no url nor emotes.
-                System.out.println(query);
                 Main.DB.SQLCommand(query);
 
 
