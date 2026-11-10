@@ -21,12 +21,12 @@ This is an active work in progress, developed on the `Backend` branch ahead of m
 - Unread email retrieval
 - Named entity extraction (person / location)
 - Message scoring logic (confirmation / rejection / follow-up / offer)
+- Scoring pipeline into the main email-processing flow (implemented, not yet called end-to-end)
+- Persisting extracted company/location data to the database
+- Moving stored credentials out of plaintext SQLite (e.g. OS keychain or encrypted storage)
 
 **In progress:**
-- Wiring the scoring pipeline into the main email-processing flow (implemented, not yet called end-to-end)
-- Persisting extracted company/location data to the database
 - A graphical interface — currently CLI-only
-- Moving stored credentials out of plaintext SQLite (e.g. OS keychain or encrypted storage)
 
 ## Tech stack
 
@@ -35,7 +35,7 @@ Java 21 · Maven · Jakarta Mail (Angus Mail) · SQLite (JDBC) · Apache OpenNLP
 
 ## Roadmap
 
-- [ ] Connect the scoring engine to the main email-processing loop
-- [ ] Persist extracted company/location data
+- [X] Connect the scoring engine to the main email-processing loop
+- [X] Persist extracted company/location data
 - [ ] Build a simple GUI to view tracked applications
 - [ ] Replace plaintext credential storage with a secure alternative
