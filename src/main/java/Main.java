@@ -2,15 +2,11 @@ import Backend.DataBase_connection;
 import Backend.Mail_manager;
 import Backend.NamedEntityRecognition;
 
-import java.io.File;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.lang.Thread;
 
 
 public class Main {
@@ -23,32 +19,45 @@ public class Main {
     public static void main(String[] args) {
         String[] credentials = checkNewUser();
 
-        Notification("[+] Recognized data:" + credentials[0]);
-        //Connect with user's email service provider
-        List<String[]> emails = unreadMailCheck();
+        while (true) {
+            try {
 
-        if (emails.isEmpty()){
-            DB.CloseConnection();
-            Notification("[+] No new emails, come back later.");
-            System.exit(0);
+                Notification("[+] Recognized data:" + credentials[0]);
+                //Connect with user's email service provider
+                List<String[]> emails = unreadMailCheck();
+
+                if (emails.isEmpty()) {
+                    DB.CloseConnection();
+                    int minutes = 1;
+                    Notification("[+] No new emails, come back later in "+minutes+" min.");
+                    minutes =(minutes* 60)*1000;
+                    Thread.sleep(minutes);
+                    Notification("[+] Checking for new emails...");
+                }
+                else {
+                    categorizeMail(emails);
+
+                    //Convert processed emails to 'read'
+                    Iterator<String[]> iterator = emails.iterator();
+                    String[] senders = new String[emails.size()];
+                    String[] subjects = new String[emails.size()];
+                    int counter = 0;
+                    while (iterator.hasNext()) {
+                        String[] temp = iterator.next();
+                        senders[counter] = temp[0];
+                        subjects[counter] = temp[1];
+                        counter = counter + 1;
+
+                    }
+                    Main.mail.markMailAsRead(senders, subjects);
+                }
+            } catch (Exception e) {
+                DB.CloseConnection();
+                throw new RuntimeException(e);
+
+            }
+
         }
-        categorizeMail(emails);
-
-        //Convert processed emails to 'read'
-        Iterator<String[]> iterator = emails.iterator();
-        String[] senders = new String[emails.size()];
-        String[] subjects = new String[emails.size()];
-        int counter = 0;
-        while (iterator.hasNext()){
-             String[] temp= iterator.next();
-             senders[counter] = temp[0];
-             subjects[counter] = temp[1];
-             counter = counter + 1;
-
-        }
-        Main.mail.markMailAsRead(senders,subjects);
-
-        DB.CloseConnection();
 
 
     }
