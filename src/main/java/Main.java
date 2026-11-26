@@ -28,7 +28,7 @@ public class Main {
 
                 if (emails.isEmpty()) {
                     DB.CloseConnection();
-                    int minutes = 1;
+                    int minutes = 60;
                     Notification("[+] No new emails, come back later in "+minutes+" min.");
                     minutes =(minutes* 60)*1000;
                     Thread.sleep(minutes);
