@@ -27,7 +27,6 @@ public class Main {
                 List<String[]> emails = unreadMailCheck();
 
                 if (emails.isEmpty()) {
-                    DB.CloseConnection();
                     int minutes = 60;
                     Notification("[+] No new emails, come back later in "+minutes+" min.");
                     minutes =(minutes* 60)*1000;
